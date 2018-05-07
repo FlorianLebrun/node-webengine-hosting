@@ -1,0 +1,69 @@
+#include "WebxWebSocketStream.h"
+
+Nan::Persistent<v8::Function> WebxWebSocketStreamJS::constructor;
+
+void WebxWebSocketStream::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
+{
+  using namespace v8;
+  if (args.Length() != 4 || !args[0]->IsObject() || !args[1]->IsObject() || !args[2]->IsFunction() || !args[3]->IsFunction())
+    Nan::ThrowTypeError("Wrong arguments");
+  if (!args.IsConstructCall())
+    Nan::ThrowError("Is not a function");
+
+  WebxEngineHost *host = Nan::ObjectWrap::Unwrap<WebxEngineHost>(args[0]->ToObject());
+  Local<Object> req = args[1]->ToObject();
+  Local<Function> onMessage = args[2].As<v8::Function>();
+  Local<Function> onClose = args[3].As<v8::Function>();
+
+  WebxWebSocketStream *wsocket = new WebxWebSocketStream(req, onMessage, onClose);
+  wsocket->Wrap(args.This());
+
+  host->connector->dispatchWebSocket(wsocket);
+
+  args.GetReturnValue().Set(args.This());
+}
+
+
+void WebxWebSocketStreamJS::write(const Nan::FunctionCallbackInfo<v8::Value> &args)
+{
+  using namespace v8;
+  WebxWebSocketStream *stream = Nan::ObjectWrap::Unwrap<WebxWebSocketStream>(args.Holder());
+  if (args.Length() != 1)
+    Nan::ThrowTypeError("Wrong arguments");
+
+  if (webx::IData* data = v8h::NewDataFromValue(args[0])) {
+    stream->read(data);
+  }
+}
+
+void WebxWebSocketStreamJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
+{
+  using namespace v8;
+  WebxWebSocketStream *stream = Nan::ObjectWrap::Unwrap<WebxWebSocketStream>(args.Holder());
+  if (stream->opposite) stream->opposite->close();
+}
+
+void WebxWebSocketStreamJS::abort(const Nan::FunctionCallbackInfo<v8::Value> &args)
+{
+  using namespace v8;
+  WebxWebSocketStream *stream = Nan::ObjectWrap::Unwrap<WebxWebSocketStream>(args.Holder());
+  stream->abort();
+}
+
+v8::Local<v8::Function> WebxWebSocketStreamJS::CreatePrototype()
+{
+  using namespace v8;
+
+  // Prepare constructor template
+  Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(WebxWebSocketStream::New);
+  tpl->SetClassName(Nan::New("WebxWebSocketStream").ToLocalChecked());
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+
+  // Prototype
+  Nan::SetPrototypeMethod(tpl, "write", WebxWebSocketStreamJS::write);
+  Nan::SetPrototypeMethod(tpl, "close", WebxWebSocketStreamJS::close);
+  Nan::SetPrototypeMethod(tpl, "abort", WebxWebSocketStreamJS::abort);
+
+  constructor.Reset(tpl->GetFunction());
+  return tpl->GetFunction();
+}
