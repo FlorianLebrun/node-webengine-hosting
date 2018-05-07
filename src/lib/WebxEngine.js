@@ -24,10 +24,14 @@ export class WebxEngine {
     if (router) router.handle(req, res, NotOnline)
     else NotOnline(req, res)
   }
-  connect(dllPath: string, dllEntryName: string, config: Object): Promise {
+  connect(options: Object): Promise {
     if (this.host) throw new Error("Webx engine already connected")
+    options.cd && process.chdir(options.cd)
+    for (const key in options.envs) {
+      process.env[key] = options.envs[key]
+    }
     this.host = new addon.WebxEngineHost()
-    this.host.connect(dllPath, dllEntryName, JSON.stringify(config))
+    this.host.connect(options.dll.path, options.dll.entryName, JSON.stringify(options.config))
   }
   disconnect() {
 
@@ -36,7 +40,7 @@ export class WebxEngine {
     if (req.method === "WEBSOCKET") {
       const accept = res._websocket.cb
       const info = res._websocket.info
-      debug.info("websocketMiddleware", req.url)
+      debug.info("WEBSOCKET", req.url)
       accept((ws) => {
         ws.send("hello in here")
         const stream = new addon.WebxWebSocketStream(this.host, req, (data) => {
@@ -58,7 +62,6 @@ export class WebxEngine {
       })
     }
     else {
-      console.log("websocketMiddleware")
       const transaction = new addon.WebxHttpTransaction(this.host, req, (status, headers, buffer) => {
         res.set(headers).status(status).send(buffer)
       })

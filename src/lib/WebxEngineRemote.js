@@ -6,10 +6,6 @@ import Path from "path"
 export class WebxEngineRemote {
   name: string = "(remote)"
 
-  ENGINE_ROOT: string
-  APP_ROOT: string
-  config: Object
-
   route() {
     const router = express.Router()
     router.use(this.dispatch.bind(this))
@@ -22,11 +18,8 @@ export class WebxEngineRemote {
     if (this.proxy) this.proxy.web(req, res)
     else res.status(404).send("Application not online")
   }
-  connect(ENGINE_ROOT: string, APP_ROOT: string, config: Object): Promise {
+  connect(options: Object): Promise {
     if (this.child) throw new Error("Webx engine already connected")
-    this.ENGINE_ROOT = ENGINE_ROOT
-    this.APP_ROOT = APP_ROOT
-    this.config = config
 
     this.child = child_process.fork(Path.dirname(__filename) + "../../../dist/lib/server_child.js", [], {
       cwd: process.cwd(),
@@ -34,15 +27,8 @@ export class WebxEngineRemote {
       //execArgv: ["--inspect"],
       execArgv: [],
     })
-
     this.child.on("message", this._ipc.bind(this))
-
-    this.child.send({
-      type: "webx-connect",
-      ENGINE_ROOT: this.ENGINE_ROOT,
-      APP_ROOT: this.APP_ROOT,
-      config: this.config,
-    })
+    this.child.send({ ...options, type: "webx-connect" })
   }
   disconnect() {
     if (!this.child) throw new Error("Webx engine not connected")

@@ -1,4 +1,5 @@
-import expressWs from "express-ws-routes"
+import express from "express"
+import expressWs from "./express-websocket"
 import { WebxEngine } from "../lib/WebxEngine"
 
 const modules = {}
@@ -9,9 +10,9 @@ function ipc_require(msg) {
 
 function ipc_webx_connect(msg) {
   const webxEngine = new WebxEngine()
-  webxEngine.connect(msg.ENGINE_ROOT, msg.APP_ROOT, msg.config)
+  webxEngine.connect(msg)
 
-  const app = expressWs()
+  const app = expressWs(express())
   app.use("/", webxEngine.route())
   const server = app.listen(0, function () {
     process.send({
