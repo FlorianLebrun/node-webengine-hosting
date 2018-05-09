@@ -5,13 +5,11 @@
   "private": true,
   "gypfile": true,
   "dependencies": {
-    "array-flatten": "^1.1.1",
     "bindings": "~1.2.1",
     "debug": "^2.2.0",
     "http-proxy": "^1.17.0",
-    "http-proxy-middleware": "^0.18.0",
     "nan": "^2.0.0",
-    "ws": "^0.8.0 || ^1.0.0"
+    "ws": "^5.1.1"
   },
   "devDependencies": {
     "babel-cli": "^6.11.4",

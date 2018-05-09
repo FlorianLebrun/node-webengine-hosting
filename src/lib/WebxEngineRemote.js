@@ -31,7 +31,6 @@ export class WebxEngineRemote {
     this.proxy = null
   }
   dispatch = (req, res, next) => {
-    debug.title(req.method, req.url)
     if (this.proxy) {
       if (req.upgrade) {
         this.proxy.ws(req, res.socket, res.head)

@@ -27,7 +27,6 @@ function ipc_webx_connect(msg) {
     })
   })
   server.on("upgrade", function (req, socket, head) {
-    debug.warning(req.method, req.url)
     app.handle(req, WebsocketResponse(req, socket, head))
   })
 }

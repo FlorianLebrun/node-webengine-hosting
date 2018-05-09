@@ -4,7 +4,7 @@ import crypto from "crypto"
 
 const WebSocket = require("ws")
 
-export function WebsocketResponse(req, socket, head) {
+export function WebsocketResponse(req, socket, head, maxPayloadSize) {
   var res = new ServerResponse(req)
   res.assignSocket(socket)
   res.head = head
@@ -49,17 +49,12 @@ export function WebsocketResponse(req, socket, head) {
       socket.write(headers.concat('', '').join('\r\n'));
     }
     catch (e) {
-      // if the upgrade write fails, shut the connection down hard
       try { socket.destroy() } catch (e) { }
       return
     }
-    return new WebSocket([req, socket, head], {
-      protocolVersion: version,
-      protocol: protocol,
-      //  extensions: extensions,
-      //   maxPayload: self.options.maxPayload
-    });
-    // return new WebSocket(socket)
+    const ws = new WebSocket(null)
+    ws.setSocket(socket, head, maxPayloadSize)
+    return ws
   }
   return res
 }
