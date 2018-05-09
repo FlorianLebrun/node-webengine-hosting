@@ -8,10 +8,7 @@ export function WebsocketResponse(req, socket, head) {
   var res = new ServerResponse(req)
   res.assignSocket(socket)
   res.head = head
-  res.send = function (chunk) {
-    throw new Error("shall be accpeted or rejected")
-  }
-  res.reject = function (chunk) {
+  res.reject = res.send = function (chunk) {
     try {
       if (res.statusCode < 400) {
         res.statusCode = 500

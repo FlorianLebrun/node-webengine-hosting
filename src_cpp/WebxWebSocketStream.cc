@@ -4,8 +4,8 @@ WebxWebSocketStream::WebxWebSocketStream(v8::Local<v8::Object> req, v8::Local<v8
 {
   using namespace v8;
   this->opposite = 0;
-  this->status = Nothing;
-  this->prevStatus = Nothing;
+  this->status = Starting;
+  this->prevStatus = Starting;
   this->onAccept.Reset(Isolate::GetCurrent(), onAccept);
   this->onReject.Reset(Isolate::GetCurrent(), onReject);
 
@@ -65,7 +65,10 @@ bool WebxWebSocketStream::write(webx::IData *data)
 
 void WebxWebSocketStream::close()
 {
-  this->status = Closed;
+  if (this->status == Starting)
+    this->status = Rejected;
+  else
+    this->status = Closed;
   uv_async_send(&this->async);
 }
 

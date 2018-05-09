@@ -8,8 +8,7 @@ class WebxWebSocketStream : public Nan::ObjectWrap, public v8h::StringMapBasedAt
 {
 public:
 
-  enum { Nothing = 0, Accepted, Rejected, Closed } status, prevStatus;
-  int isClosed;
+  enum { Starting = 0, Accepted, Rejected, Closed } status, prevStatus;
   v8::Persistent<v8::Function> onClose;
 
   // For inbound stream
