@@ -1,4 +1,4 @@
-#include "WebxEngineHost.h"
+#include "./WebxEngineHost.h"
 
 Nan::Persistent<v8::Function> WebxEngineHostJS::constructor;
 

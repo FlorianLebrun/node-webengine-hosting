@@ -1,4 +1,4 @@
-#include "WebxHttpTransaction.h"
+#include "./WebxHttpTransaction.h"
 
 Nan::Persistent<v8::Function> WebxHttpTransactionJS::constructor;
 
@@ -29,19 +29,27 @@ void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
   if (args.Length() != 1)
     Nan::ThrowTypeError("Wrong arguments");
 
-  if (transaction->request_stream) {
-    if (webx::IData* data = v8h::NewDataFromValue(args[0])) {
+  if (webx::IData *data = v8h::NewDataFromValue(args[0]))
+  {
+    if (transaction->request_stream)
+    {
       data->from = transaction;
       transaction->request_stream->write(data);
     }
+    else {
+      printf(">>> Lost chunk\n"); 
+    }
   }
+  else
+    Nan::ThrowError("Cannot write this type of chunk");
 }
 
 void WebxHttpTransactionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
   WebxHttpTransaction *transaction = Nan::ObjectWrap::Unwrap<WebxHttpTransaction>(args.Holder());
-  if(transaction->request_stream) transaction->request_stream->close();
+  if (transaction->request_stream)
+    transaction->request_stream->close();
 }
 
 void WebxHttpTransactionJS::abort(const Nan::FunctionCallbackInfo<v8::Value> &args)

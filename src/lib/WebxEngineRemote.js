@@ -1,27 +1,21 @@
+import { debug } from "@common"
 import child_process from "child_process"
-import express from "express"
 import httpProxy from "http-proxy"
 import Path from "path"
 
+function NotOnline(req, res) { res.status(404).send("Application not online") }
+
 export class WebxEngineRemote {
   name: string = "(remote)"
+  proxy = null
 
-  route() {
-    const router = express.Router()
-    router.use(this.dispatch.bind(this))
-    return router
-  }
   getName() {
     return this.name
-  }
-  dispatch(req, res) {
-    if (this.proxy) this.proxy.web(req, res)
-    else res.status(404).send("Application not online")
   }
   connect(options: Object): Promise {
     if (this.child) throw new Error("Webx engine already connected")
 
-    this.child = child_process.fork(Path.dirname(__filename) + "../../../dist/lib/server_child.js", [], {
+    this.child = child_process.fork(Path.dirname(__filename) + "../../../dist/lib/remote_child.js", [], {
       cwd: process.cwd(),
       stdio: [0, 1, 2, "ipc"],
       //execArgv: ["--inspect"],
@@ -36,15 +30,25 @@ export class WebxEngineRemote {
     this.child = null
     this.proxy = null
   }
+  dispatch = (req, res, next) => {
+    debug.title(req.method, req.url)
+    if (this.proxy) {
+      if (req.upgrade) {
+        this.proxy.ws(req, res.socket, res.head)
+      }
+      else {
+        this.proxy.web(req, res)
+      }
+    }
+    else NotOnline(req, res)
+  }
   _ipc_webx_listen(msg) {
     console.log(msg)
     this.name = msg.engine
-    this.proxy = new httpProxy.createProxyServer({
-      target: {
-        host: msg.host,//'localhost',
-        port: msg.port,//9015
-      }
-    });
+    this.proxy = httpProxy.createProxyServer({
+      target: msg.address,
+      ws: true,
+    })
   }
   _ipc(msg) {
     console.log(" > parent:", msg.type, msg.id !== undefined ? msg.id : "")

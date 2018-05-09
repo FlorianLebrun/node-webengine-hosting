@@ -1,6 +1,7 @@
+import { debug } from "@common"
 import express from "express"
-import expressWs from "./express-websocket"
 import { WebxEngine } from "../lib/WebxEngine"
+import { WebsocketResponse } from "./WebsocketResponse"
 
 const modules = {}
 
@@ -12,15 +13,22 @@ function ipc_webx_connect(msg) {
   const webxEngine = new WebxEngine()
   webxEngine.connect(msg)
 
-  const app = expressWs(express())
-  app.use("/", webxEngine.route())
+  const app = express()
+  app.use(webxEngine.dispatch.bind(webxEngine))
+
   const server = app.listen(0, function () {
+    const { port } = server.address()
     process.send({
       type: "webx-listen",
       engine: webxEngine.getName(),
+      address: "http://localhost:" + port,
       host: "localhost",
-      port: server.address().port,
+      port,
     })
+  })
+  server.on("upgrade", function (req, socket, head) {
+    debug.warning(req.method, req.url)
+    app.handle(req, WebsocketResponse(req, socket, head))
   })
 }
 

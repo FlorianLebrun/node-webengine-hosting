@@ -5,24 +5,13 @@ const addon = require("bindings")("addon")
 
 function NotOnline(req, res) { res.status(404).send("Application not online") }
 
+
 export class WebxEngine {
   host: addon.WebxEngineHost = null
   router: express.Router = null
 
   getName() {
     return this.host && this.host.getName()
-  }
-  route(): Router {
-    if (!this.router && this.host) {
-      this.router = express.Router()
-      this.router.use(this.__middleware)
-    }
-    return this.router
-  }
-  dispatch(req, res) {
-    const router = this.route()
-    if (router) router.handle(req, res, NotOnline)
-    else NotOnline(req, res)
   }
   connect(options: Object): Promise {
     if (this.host) throw new Error("Webx engine already connected")
@@ -36,19 +25,15 @@ export class WebxEngine {
   disconnect() {
 
   }
-  __middleware = (req, res, next) => {
-    if (req.method === "WEBSOCKET") {
-      const accept = res._websocket.cb
-      const info = res._websocket.info
-      debug.info("WEBSOCKET", req.url)
-      accept((ws) => {
+  dispatch = (req, res, next) => {
+    debug.info(req.method, req.url)
+    if (!this.host) {
+      NotOnline(req, res, next)
+    }
+    else if (req.upgrade) {
+      const stream = new addon.WebxWebSocketStream(this.host, req, (data) => {
+        const ws = res.accept()
         ws.send("hello in here")
-        const stream = new addon.WebxWebSocketStream(this.host, req, (data) => {
-          console.log("server send", data)
-          ws.send(data)
-        }, () => {
-          console.log("WebSocket closed by server")
-        })
 
         ws.on("message", (msg) => {
           //ws.send("recv: " + msg)
@@ -59,7 +44,21 @@ export class WebxEngine {
           stream.close()
           console.log("WebSocket closed")
         })
+
+        stream.on("message", (data) => {
+          console.log("server send", data)
+          ws.send(data)
+        })
+
+        stream.on("close", (data) => {
+          ws.close()
+          console.log("WebSocket closed by server")
+        })
+
+      }, (code) => {
+        res.status(code).reject()
       })
+
     }
     else {
       const transaction = new addon.WebxHttpTransaction(this.host, req, (status, headers, buffer) => {

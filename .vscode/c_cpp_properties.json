@@ -1,44 +1,44 @@
 {
-  "configurations": [
-    {
-      "name": "Win32",
-      "includePath": [
-        "${workspaceFolder}/node_project/src",
-        "${workspaceFolder}/node_project/deps",
-        "${workspaceFolder}/node_modules/nan",
-        "${workspaceFolder}/node_project/deps/uv/include",
-        "${workspaceFolder}/node_project/deps/v8/include",
-        "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/include/*",
-        "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/atlmfc/include/*",
-        "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/um",
-        "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/ucrt",
-        "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/shared",
-        "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/winrt"
-      ],
-      "defines": [
-        "_DEBUG",
-        "UNICODE",
-        "_UNICODE"
-      ],
-      "intelliSenseMode": "msvc-x64",
-      "browse": {
-        "path": [
-          "${workspaceFolder}/src",
-          "${workspaceFolder}/node_project",
-          "${workspaceFolder}/node_modules/nan",
-          "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/include/*",
-          "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/atlmfc/include/*",
-          "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/um",
-          "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/ucrt",
-          "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/shared",
-          "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/winrt"
-        ],
-        "limitSymbolsToIncludedHeaders": true,
-        "databaseFilename": ""
-      },
-      "cStandard": "c11",
-      "cppStandard": "c++17"
-    }
-  ],
-  "version": 3
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/node_project/src",
+                "${workspaceFolder}/node_project/deps",
+                "${workspaceFolder}/node_modules/nan",
+                "${workspaceFolder}/node_project/deps/uv/include",
+                "${workspaceFolder}/node_project/deps/v8/include",
+                "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/include/*",
+                "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/atlmfc/include/*",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/um",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/ucrt",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/shared",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/winrt"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/node_project",
+                    "${workspaceFolder}/node_modules/nan",
+                    "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/include/*",
+                    "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/atlmfc/include/*",
+                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/um",
+                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/ucrt",
+                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/shared",
+                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/winrt"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
 }

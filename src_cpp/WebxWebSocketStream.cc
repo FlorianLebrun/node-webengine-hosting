@@ -1,12 +1,13 @@
 #include "./WebxWebSocketStream.h"
 
-WebxWebSocketStream::WebxWebSocketStream(v8::Local<v8::Object> req, v8::Local<v8::Function> onMessage, v8::Local<v8::Function> onClose)
+WebxWebSocketStream::WebxWebSocketStream(v8::Local<v8::Object> req, v8::Local<v8::Function> onAccept, v8::Local<v8::Function> onReject)
 {
   using namespace v8;
   this->opposite = 0;
-  this->shallClose = 0;
-  this->onMessage.Reset(Isolate::GetCurrent(), onMessage);
-  this->onClose.Reset(Isolate::GetCurrent(), onClose);
+  this->status = Nothing;
+  this->prevStatus = Nothing;
+  this->onAccept.Reset(Isolate::GetCurrent(), onAccept);
+  this->onReject.Reset(Isolate::GetCurrent(), onReject);
 
   // Set request pseudo headers
   this->setAttributStringV8(":method", v8h::GetIn(req, "method"));
@@ -29,27 +30,31 @@ WebxWebSocketStream::WebxWebSocketStream(v8::Local<v8::Object> req, v8::Local<v8
   this->async.data = this;
   uv_async_init(loop, &this->async, completeSync);
 }
+
 WebxWebSocketStream::~WebxWebSocketStream()
 {
 }
 
-void WebxWebSocketStream::setOpposite(webx::IStream *stream) {
+void WebxWebSocketStream::setOpposite(webx::IStream *stream)
+{
   this->opposite = stream;
-  for (webx::IData* data = this->input_queue.flush(); data; data = data->next) {
-    this->opposite->write(data);
-  }
+  this->status = Accepted;
+  uv_async_send(&this->async);
 }
 
-void WebxWebSocketStream::read(webx::IData* data) {
+void WebxWebSocketStream::read(webx::IData *data)
+{
   data->from = this;
-  if (this->opposite) {
+  if (this->opposite)
+  {
     this->opposite->write(data);
   }
-  else {
-    this->input_queue.push(data);
+  else
+  {
+    throw "Shall be accepted before data";
   }
 }
-bool WebxWebSocketStream::write(webx::IData* data)
+bool WebxWebSocketStream::write(webx::IData *data)
 {
   this->output_lock.lock();
   this->output_queue.push(data);
@@ -60,7 +65,7 @@ bool WebxWebSocketStream::write(webx::IData* data)
 
 void WebxWebSocketStream::close()
 {
-  this->shallClose = 1;
+  this->status = Closed;
   uv_async_send(&this->async);
 }
 
@@ -71,24 +76,40 @@ void WebxWebSocketStream::completeSync(uv_async_t *handle)
   Isolate *isolate = Isolate::GetCurrent();
   HandleScope scope(isolate);
 
-  webx::IData* datagrams;
-  _this->output_lock.lock();
-  datagrams = _this->output_queue.flush();
-  _this->output_lock.unlock();
-  if (datagrams) {
-    for (webx::IData* data = datagrams; data; data = data->next) {
-      Local<Value> argv[] = { v8h::MakeString(data->bytes, data->size) };
-      Local<Function> onMessage = Local<Function>::New(isolate, _this->onMessage);
-      onMessage->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+  if (!_this->onMessage.IsEmpty()) {
+    webx::IData *datagrams;
+    _this->output_lock.lock();
+    datagrams = _this->output_queue.flush();
+    _this->output_lock.unlock();
+    if (datagrams)
+    {
+      for (webx::IData *data = datagrams; data; data = data->next)
+      {
+        Local<Value> argv[] = { v8h::MakeString(data->bytes, data->size) };
+        Local<Function> onMessage = Local<Function>::New(isolate, _this->onMessage);
+        onMessage->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+      }
+      datagrams->release();
     }
-    datagrams->release();
   }
 
-  if (_this->shallClose == 1) {
-    printf("shallClose\n");
-    Local<Value> argv[] = { Nan::New("close").ToLocalChecked() };
-    Local<Function> onClose = Local<Function>::New(isolate, _this->onClose);
-    onClose->Call(isolate->GetCurrentContext()->Global(), 1, argv);
-    _this->shallClose = 2;
+  if (_this->status != _this->prevStatus) {
+    switch (_this->status) {
+    case Accepted: {
+      Local<Value> argv[] = { _this->persistent().Get(isolate) };
+      Local<Function> onAccept = Local<Function>::New(isolate, _this->onAccept);
+      onAccept->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+    } break;
+    case Rejected: {
+      Local<Value> argv[] = { Nan::New(404) };
+      Local<Function> onReject = Local<Function>::New(isolate, _this->onReject);
+      onReject->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+    } break;
+    case Closed: {
+      Local<Function> onClose = Local<Function>::New(isolate, _this->onClose);
+      onClose->Call(isolate->GetCurrentContext()->Global(), 0, 0);
+    } break;
+    }
+    _this->prevStatus = _this->status;
   }
 }
