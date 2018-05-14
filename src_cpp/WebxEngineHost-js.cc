@@ -4,10 +4,12 @@ Nan::Persistent<v8::Function> WebxEngineHostJS::constructor;
 
 void WebxEngineHost::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
+  if (args.Length() != 1 || !args[0]->IsFunction())
+    Nan::ThrowTypeError("Wrong arguments");
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  WebxEngineHost *obj = new WebxEngineHost();
+  WebxEngineHost *obj = new WebxEngineHost(args[0].As<v8::Function>());
   obj->Wrap(args.This());
   args.GetReturnValue().Set(args.This());
 }
@@ -37,7 +39,8 @@ void WebxEngineHostJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
   args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
 }
 
-v8::Local<v8::Function> WebxEngineHostJS::CreatePrototype() {
+v8::Local<v8::Function> WebxEngineHostJS::CreatePrototype()
+{
 
   // Prepare constructor template
   v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(WebxEngineHost::New);

@@ -1,25 +1,42 @@
 #include "./WebxEngineHost.h"
 
-WebxEngineHost::WebxEngineHost()
+WebxEngineHost::WebxEngineHost(v8::Local<v8::Function> onNotification)
+  : notifications(this, this->completeSync)
 {
-  this->connector = 0;
+  using namespace v8;
+  Isolate *isolate = Isolate::GetCurrent();
 
-  uv_loop_t *loop = uv_default_loop();
-/*  this->queue_async.data = this;
-  uv_async_init(loop, &this->queue_async, completeSync);
-  uv_mutex_init(&this->queue_mutex);*/
+  this->connector = 0;
+  this->onNotification.Reset(Isolate::GetCurrent(), onNotification);
 }
 
 WebxEngineHost::~WebxEngineHost()
 {
-  if (this->connector) {
+  if (this->connector)
+  {
     this->connector->disconnect();
     this->connector = 0;
   }
 }
 
-void WebxEngineHost::completeSync(uv_async_t *handle){
+void WebxEngineHost::completeSync(uv_async_t *handle)
+{
+  using namespace v8;
+  WebxEngineHost *_this = (WebxEngineHost *)handle->data;
+  if (webx::IEvent *events = _this->notifications.flush())
+  {
+    Isolate *isolate = Isolate::GetCurrent();
+    HandleScope scope(isolate);
 
+    Local<Function> onNotification = Local<Function>::New(isolate, _this->onNotification);
+    for (webx::IEvent *ev = events; ev; ev = ev->next)
+    {
+      v8h::ObjectVisitor object(ev);
+      Local<Value> argv[] = { Nan::New(ev->eventName()).ToLocalChecked(), object.data };
+      onNotification->Call(isolate->GetCurrentContext()->Global(), 2, argv);
+    }
+    events->release();
+  }
 }
 
 void WebxEngineHost::connect(const char *dllPath, const char *dllEntryPoint, const char *config)
@@ -45,10 +62,7 @@ void WebxEngineHost::connect(const char *dllPath, const char *dllEntryPoint, con
   }
 }
 
-void WebxEngineHost::notify(const char *event, const void *bytes, int32_t length)
+void WebxEngineHost::notify(webx::IEvent *event)
 {
-  if (bytes)
-    std::cout << "notify '" << event << "' : '" << bytes << "'\n";
-  else
-    std::cout << "notify '" << event << "'\n";
+  this->notifications.push(event);
 }

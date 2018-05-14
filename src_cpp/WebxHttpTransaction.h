@@ -4,36 +4,39 @@
 #include "./v8helper.h"
 #include "./WebxEngineHost.h"
 
+class WebxHttpTransaction;
+class WebxHttpTransactionJS;
+
 class WebxHttpResponse : public v8h::StringMapBasedAttributs<webx::IStream>
 {
 public:
-  webx::DataQueue body;
+  WebxHttpTransaction *transaction;
+  v8h::EventQueue<webx::IData> output;
+
+  WebxHttpResponse(WebxHttpTransaction *transaction);
+
+  v8::Local<v8::Value> getBody();
 
   virtual void setOpposite(webx::IStream *stream) override;
   virtual bool write(webx::IData *data) override;
   virtual void close() override;
 
-  v8::Local<v8::Object> NewHeaders();
-  v8::Local<v8::Value> NewBuffer();
+  static void completeSync(uv_async_t *handle);
+  static void closeSync(uv_handle_t *handle);
 };
 
 class WebxHttpTransaction : public Nan::ObjectWrap, public v8h::StringMapBasedAttributs<webx::IHttpTransaction>
 {
 public:
-  int statusCode;
-  webx::IStream* request_stream;
-  WebxHttpResponse response_stream;
+  webx::IStream* opposite;
+  WebxHttpResponse response;
   v8::Persistent<v8::Function> onComplete;
-  uv_async_t async;
   
   WebxHttpTransaction(v8::Local<v8::Object> req, v8::Local<v8::Function> onComplete);
   ~WebxHttpTransaction();
-  void abort() {}
-
+  
   virtual void setOpposite(webx::IStream* stream) override;
   virtual webx::IStream *getResponse() override;
-  virtual void complete(int statusCode) override;
-  static void completeSync(uv_async_t *handle);
 
   static void New(const Nan::FunctionCallbackInfo<v8::Value> &info);
 };
@@ -46,7 +49,6 @@ public:
 
   static void write(const Nan::FunctionCallbackInfo<v8::Value> &args);
   static void close(const Nan::FunctionCallbackInfo<v8::Value> &args);
-  static void abort(const Nan::FunctionCallbackInfo<v8::Value> &args);
 };
 
 #endif

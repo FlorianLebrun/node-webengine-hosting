@@ -11,22 +11,26 @@ function ipc_require(msg) {
 
 function ipc_webx_connect(msg) {
   const webxEngine = new WebxEngine()
-  webxEngine.connect(msg)
 
   const app = express()
-  app.use(webxEngine.dispatch.bind(webxEngine))
+  app.use(webxEngine.dispatch)
+
+  webxEngine.addEventListener((type, data) => {
+    process.send({ type: "webx-event", event: type, data })
+  })
 
   const server = app.listen(0, function () {
-    const { port } = server.address()
-    process.send({
-      type: "webx-listen",
-      engine: webxEngine.getName(),
-      address: "http://localhost:" + port,
-      host: "localhost",
-      port,
+    webxEngine.connect(msg, () => {
+      const { port } = server.address()
+      process.send({
+        type: "webx-listen",
+        engine: webxEngine.getName(),
+        address: "http://localhost:" + port,
+        host: "localhost",
+        port,
+      })
     })
-  })
-  server.on("upgrade", function (req, socket, head) {
+  }).on("upgrade", function (req, socket, head) {
     app.handle(req, WebsocketResponse(req, socket, head))
   })
 }

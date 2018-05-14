@@ -31,10 +31,10 @@ void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
 
   if (webx::IData *data = v8h::NewDataFromValue(args[0]))
   {
-    if (transaction->request_stream)
+    if (transaction->opposite)
     {
       data->from = transaction;
-      transaction->request_stream->write(data);
+      transaction->opposite->write(data);
     }
     else {
       printf(">>> Lost chunk\n"); 
@@ -48,15 +48,8 @@ void WebxHttpTransactionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &ar
 {
   using namespace v8;
   WebxHttpTransaction *transaction = Nan::ObjectWrap::Unwrap<WebxHttpTransaction>(args.Holder());
-  if (transaction->request_stream)
-    transaction->request_stream->close();
-}
-
-void WebxHttpTransactionJS::abort(const Nan::FunctionCallbackInfo<v8::Value> &args)
-{
-  using namespace v8;
-  WebxHttpTransaction *transaction = Nan::ObjectWrap::Unwrap<WebxHttpTransaction>(args.Holder());
-  transaction->abort();
+  if (transaction->opposite)
+    transaction->opposite->close();
 }
 
 v8::Local<v8::Function> WebxHttpTransactionJS::CreatePrototype()
@@ -71,7 +64,6 @@ v8::Local<v8::Function> WebxHttpTransactionJS::CreatePrototype()
   // Prototype
   Nan::SetPrototypeMethod(tpl, "write", WebxHttpTransactionJS::write);
   Nan::SetPrototypeMethod(tpl, "close", WebxHttpTransactionJS::close);
-  Nan::SetPrototypeMethod(tpl, "abort", WebxHttpTransactionJS::abort);
 
   constructor.Reset(tpl->GetFunction());
   return tpl->GetFunction();

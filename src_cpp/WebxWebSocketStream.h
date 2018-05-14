@@ -18,9 +18,7 @@ public:
 
   // For outbound stream
   v8::Persistent<v8::Function> onMessage;
-  webx::DataQueue output_queue;
-  SpinLock output_lock;
-  uv_async_t async;
+  v8h::EventQueue<webx::IData> output;
 
   WebxWebSocketStream(v8::Local<v8::Object> req, v8::Local<v8::Function> onAccept, v8::Local<v8::Function> onReject);
   ~WebxWebSocketStream();

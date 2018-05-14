@@ -5,25 +5,57 @@ const addon = require("bindings")("addon")
 
 function NotOnline(req, res) { res.status(404).send("Application not online") }
 
-
 export class WebxEngine {
   host: addon.WebxEngineHost = null
   router: express.Router = null
+  connecting: Array = null
+  listeners: Array = []
 
   getName() {
     return this.host && this.host.getName()
   }
-  connect(options: Object): Promise {
-    if (this.host) throw new Error("Webx engine already connected")
-    options.cd && process.chdir(options.cd)
-    for (const key in options.envs) {
-      process.env[key] = options.envs[key]
+  addEventListener(callback: Function) {
+    this.listeners.push(callback)
+  }
+  removeEventListener(callback: Function) {
+    this.listeners.splice(this.listeners.indexOf(callback), 1)
+  }
+  connect(options: Object, callback: Function): Promise {
+    if (!this.host && !this.connecting) {
+      options.cd && process.chdir(options.cd)
+      for (const key in options.envs) {
+        process.env[key] = options.envs[key]
+      }
+      this.host = new addon.WebxEngineHost(this.handleEvent)
+      this.host.connect(options.dll.path, options.dll.entryName, JSON.stringify(options.config))
+      this.connecting = []
     }
-    this.host = new addon.WebxEngineHost()
-    this.host.connect(options.dll.path, options.dll.entryName, JSON.stringify(options.config))
+    if (callback) {
+      if (!this.connecting) callback()
+      else this.connecting.push(callback)
+    }
   }
   disconnect() {
 
+  }
+  handleEvent = (type: string, data: any) => {
+    switch (type) {
+      case "engine-connection":
+        this.connecting && this.connecting.forEach(cb => cb())
+        this.connecting = null
+        return
+      case "engine-terminate":
+        debug.info("[engine-terminate]")
+        this.connecting && this.connecting.forEach(cb => cb("connection failed: " + data))
+        this.connecting = null
+        this.host = null
+        return
+      default:
+        debug.error("unsupported notification:", type, data)
+    }
+    for (const cb of this.listeners) {
+      cb(type, data)
+    }
   }
   dispatch = (req, res, next) => {
     debug.info(req.method, req.url)
