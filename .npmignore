@@ -1,6 +1,7 @@
 !/dist
-!/Dll
-/build
+!/build
+/src
+/src_cpp
 /.vscode
 /public
 

@@ -61,13 +61,6 @@ namespace webx
 
   typedef IEngineConnector *(*tEngineConnectProc)(IEngineHost *host, const char *args);
 
-
-  namespace events {
-    class EngineConnection : public BuiltinEvent<IEvent>
-    {
-      virtual const char *eventName() override { return "engine-connection"; }
-    };
-  }
 } // namespace webx
 
 #endif

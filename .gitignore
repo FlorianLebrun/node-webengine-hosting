@@ -9,6 +9,7 @@ npm-debug.log*
 # react-intl messages
 intl/messages.json
 
+/.vs
 /dist
 /build
 /Dll

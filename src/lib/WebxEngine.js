@@ -40,18 +40,15 @@ export class WebxEngine {
   }
   handleEvent = (type: string, data: any) => {
     switch (type) {
-      case "engine-connection":
+      case "Runtime.startup":
         this.connecting && this.connecting.forEach(cb => cb())
         this.connecting = null
         return
-      case "engine-terminate":
+      case "Runtime.terminate":
         debug.info("[engine-terminate]")
         this.connecting && this.connecting.forEach(cb => cb("connection failed: " + data))
         this.connecting = null
         this.host = null
-        return
-      default:
-        debug.error("unsupported notification:", type, data)
     }
     for (const cb of this.listeners) {
       cb(type, data)

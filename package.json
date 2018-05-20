@@ -1,9 +1,9 @@
 {
   "name": "node-webengine-hosting",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "dist/lib/index.js",
   "private": true,
-  "gypfile": true,
+  "gypfile": false,
   "dependencies": {
     "bindings": "~1.2.1",
     "debug": "^2.2.0",
@@ -84,7 +84,7 @@
   },
   "scripts": {
     "start": "set PORT=1418 && nodemon --watch src --exec npm run debug",
-    "debug": "babel src -d dist --source-maps && babel-node src/test/test --source-maps --inspect",
+    "debug": "babel src -d dist --source-maps && babel-node src/test/test --source-maps",
     "build": "node-gyp rebuild && babel src -d dist",
     "build:cpp": "node-gyp rebuild",
     "build:js": "babel src -d dist",

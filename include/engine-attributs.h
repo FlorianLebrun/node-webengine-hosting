@@ -59,12 +59,44 @@ namespace webx
     double getAttributFloat(const char *name);
 
     const char* getAttributString(const char *name);
+
+    void printAttributs();
   };
 
   // -------------------------------------------------
   // Implementations
   // -------------------------------------------------
 
+  inline void IAttributs::printAttributs()
+  {
+    struct Visitor : public IAttributsVisitor
+    {
+      virtual void visitInt(const char *name, int64_t value) override
+      {
+        printf("%s: %ld\n", name, value);
+      }
+      virtual void visitFloat(const char *name, double value) override
+      {
+        printf("%s: %lg\n", name, value);
+      }
+      virtual void visitString(const char *name, const char *value) override
+      {
+        printf("%s: %s\n", name, value);
+      }
+      virtual void visitObject(const char *name, IAttributs *value) override
+      {
+        if(value) {
+          Visitor visitor;
+          printf("%s: {");
+          value->visitAttributs(&visitor);
+          printf("}");
+        }
+      }
+    };
+    Visitor visitor;
+    this->visitAttributs(&visitor);
+  }
+  
   template <class CAttributsVisitor = IAttributsVisitor>
   class StringAttributsVisitor : public CAttributsVisitor
   {
@@ -126,25 +158,6 @@ namespace webx
     virtual bool setAttributString(const char *name, const char *value, int size = -1) override
     {
       return false;
-    }
-    void printAttributs()
-    {
-      struct Visitor : public IAttributs::IVisitor
-      {
-        virtual void visitInt(const char *name, int64_t value) override
-        {
-          printf("%s: %ld\n", name, value);
-        }
-        virtual void visitFloat(const char *name, double value) override
-        {
-          printf("%s: %lg\n", name, value);
-        }
-        virtual void visitString(const char *name, const char *value) override
-        {
-          printf("%s: %s\n", name, value);
-        }
-      };
-      this->visitAttributs(&Visitor());
     }
   };
 
@@ -251,11 +264,14 @@ namespace webx
     }
     virtual bool setAttributString(const char *name, const char *value, int size) override
     {
-      if (size < 0)
-        this->attributs[name] = value;
-      else
-        this->attributs[name] = std::string(value, size);
-      return true;
+      if(value) {
+        if (size < 0)
+          this->attributs[name] = value;
+        else
+          this->attributs[name] = std::string(value, size);
+        return true;
+      }
+      return false;
     }
     void print()
     {
