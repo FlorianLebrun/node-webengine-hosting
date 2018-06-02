@@ -55,7 +55,7 @@ export class WebxEngine {
     }
   }
   dispatch = (req, res, next) => {
-    debug.info(req.method, req.url)
+    //debug.info(req.method, req.url)
     if (!this.host) {
       NotOnline(req, res, next)
     }
