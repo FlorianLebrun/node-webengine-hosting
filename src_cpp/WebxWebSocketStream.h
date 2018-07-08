@@ -2,11 +2,15 @@
 #define WebxWebSocketStream_H
 
 #include "./v8helper.h"
-#include "./WebxEngineHost.h"
+#include "./WebxSession.h"
 
-class WebxWebSocketStream : public Nan::ObjectWrap, public v8h::StringMapBasedAttributs<webx::IStream>
+class WebxWebSocketStream;
+class WebxWebSocketStreamJS;
+
+class WebxWebSocketStream : public Nan::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::IStream>>
 {
 public:
+  friend WebxWebSocketStreamJS;
 
   enum { Starting = 0, Accepted, Rejected, Closed } status, prevStatus;
   v8::Persistent<v8::Function> onClose;
@@ -24,22 +28,23 @@ public:
   ~WebxWebSocketStream();
   void abort() {}
 
-  virtual void setOpposite(webx::IStream* stream) override;
+  virtual bool connect(webx::IStream* stream) override;
   virtual bool write(webx::IData* data) override;
   virtual void close() override;
+  virtual void free() override;
 
   void read(webx::IData* data);
 
   static void completeSync(uv_async_t *handle);
 
-  static void New(const Nan::FunctionCallbackInfo<v8::Value> &info);
 };
 
 class WebxWebSocketStreamJS
 {
 public:
-  static v8::Local<v8::Function> CreatePrototype();
   static Nan::Persistent<v8::Function> constructor;
+  static v8::Local<v8::Function> CreatePrototype();
+  static void New(const Nan::FunctionCallbackInfo<v8::Value> &info);
 
   static void on(const Nan::FunctionCallbackInfo<v8::Value> &args);
   static void write(const Nan::FunctionCallbackInfo<v8::Value> &args);

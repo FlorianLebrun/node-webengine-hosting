@@ -33,9 +33,14 @@ webx::IStream *WebxHttpTransaction::getResponse()
 {
   return &this->response;
 }
-void WebxHttpTransaction::setOpposite(webx::IStream *stream)
+bool WebxHttpTransaction::connect(webx::IStream *stream)
 {
   this->opposite = stream;
+  return true;
+}
+
+void WebxHttpTransaction::free() {
+  printf("WebxHttpTransaction leak !\n");
 }
 
 
@@ -48,9 +53,18 @@ WebxHttpResponse::WebxHttpResponse(WebxHttpTransaction *transaction)
   this->transaction = transaction;
 }
 
-void WebxHttpResponse::setOpposite(IStream *stream)
+void WebxHttpResponse::retain() {
+  this->transaction->retain();
+}
+
+void WebxHttpResponse::release() {
+  this->transaction->release();
+}
+
+bool WebxHttpResponse::connect(IStream *stream)
 {
-  throw "not supported";
+  printf("WebxHttpResponse connect not supported\n");
+  return false;
 }
 bool WebxHttpResponse::write(webx::IData *data)
 {

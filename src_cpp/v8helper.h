@@ -6,7 +6,7 @@
 #include <nan.h>
 #include <string>
 
-#include "../include/engine-interfaces.h"
+#include "../include/webx.h"
 #include "./spinlock.h"
 
 namespace v8h

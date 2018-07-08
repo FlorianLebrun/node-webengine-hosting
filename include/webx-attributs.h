@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <string>
 
+#include "./webx-releasables.h"
+
 namespace webx
 {
   class IAttributs;
@@ -35,7 +37,7 @@ namespace webx
   };
 
   // Interface of attributs object
-  class IAttributs
+  class IAttributs : public IReleasable
   {
   public:
     virtual int32_t getAttributCount() = 0;
@@ -73,7 +75,7 @@ namespace webx
     {
       virtual void visitInt(const char *name, int64_t value) override
       {
-        printf("%s: %ld\n", name, value);
+        printf("%s: %lld\n", name, value);
       }
       virtual void visitFloat(const char *name, double value) override
       {
@@ -87,7 +89,7 @@ namespace webx
       {
         if(value) {
           Visitor visitor;
-          printf("%s: {");
+          printf("%s: {", name);
           value->visitAttributs(&visitor);
           printf("}");
         }

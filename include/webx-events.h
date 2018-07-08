@@ -2,7 +2,7 @@
 #ifndef webx_engine_events_h_
 #define webx_engine_events_h_
 
-#include "./engine-attributs.h"
+#include "./webx-releasables.h"
 
 namespace webx
 {
@@ -26,7 +26,6 @@ namespace webx
     IEvent *next;
     virtual int eventID() { return undefinedEventID; }
     virtual const char *eventName() { return "undefined"; }
-    virtual void release() = 0;
   };
 
   // Interface of data event
@@ -47,11 +46,8 @@ namespace webx
   // Implementations
   // -------------------------------------------------
   template <class CEvent>
-  class BuiltinEvent : public BuiltinAttributs<CEvent> {
-    virtual void release() override
-    {
-      delete this;
-    }
+  class BuiltinEvent : public BuiltinAttributs<Releasable<CEvent>> {
+
   };
 
   template <class CEvent>
@@ -105,7 +101,7 @@ namespace webx
 
   inline IData *IData::New(int size)
   {
-    class Data : public NoAttributs<IData>
+    class Data : public NoAttributs<Releasable<IData>>
     {
     public:
       char buffer[1];
@@ -116,14 +112,15 @@ namespace webx
         this->size = size;
         this->bytes = this->buffer;
       }
-      virtual void release() override
+      virtual void free() override
       {
-        if (this->next)
+        if (this->next) {
           this->next->release();
+        }
         ::free(this);
       }
     };
-    return new (::malloc(sizeof(IData) + size)) Data(size);
+    return new (::malloc(sizeof(Data) + size)) Data(size);
   }
 } // namespace webx
 #endif

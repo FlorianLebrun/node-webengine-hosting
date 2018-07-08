@@ -31,11 +31,12 @@ WebxWebSocketStream::~WebxWebSocketStream()
 {
 }
 
-void WebxWebSocketStream::setOpposite(webx::IStream *stream)
+bool WebxWebSocketStream::connect(webx::IStream *stream)
 {
   this->opposite = stream;
   this->status = Accepted;
   this->output.complete();
+  return true;
 }
 
 void WebxWebSocketStream::read(webx::IData *data)
@@ -63,6 +64,10 @@ void WebxWebSocketStream::close()
   else
     this->status = Closed;
   this->output.complete();
+}
+
+void WebxWebSocketStream::free() {
+  printf("WebxWebSocketStream leak !\n");
 }
 
 void WebxWebSocketStream::completeSync(uv_async_t *handle)

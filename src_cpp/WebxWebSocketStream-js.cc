@@ -2,7 +2,7 @@
 
 Nan::Persistent<v8::Function> WebxWebSocketStreamJS::constructor;
 
-void WebxWebSocketStream::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
+void WebxWebSocketStreamJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
   if (args.Length() != 4 || !args[0]->IsObject() || !args[1]->IsObject() || !args[2]->IsFunction() || !args[3]->IsFunction())
@@ -10,7 +10,7 @@ void WebxWebSocketStream::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  WebxEngineHost *host = Nan::ObjectWrap::Unwrap<WebxEngineHost>(args[0]->ToObject());
+  WebxSession *session = Nan::ObjectWrap::Unwrap<WebxSession>(args[0]->ToObject());
   Local<Object> req = args[1]->ToObject();
   Local<Function> onAccept = args[2].As<v8::Function>();
   Local<Function> onReject = args[3].As<v8::Function>();
@@ -18,7 +18,7 @@ void WebxWebSocketStream::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
   WebxWebSocketStream *wsocket = new WebxWebSocketStream(req, onAccept, onReject);
   wsocket->Wrap(args.This());
 
-  host->connector->dispatchWebSocket(wsocket);
+  session->context->dispatchWebSocket(wsocket);
 
   args.GetReturnValue().Set(args.This());
 }
@@ -79,7 +79,7 @@ v8::Local<v8::Function> WebxWebSocketStreamJS::CreatePrototype()
   using namespace v8;
 
   // Prepare constructor template
-  Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(WebxWebSocketStream::New);
+  Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(WebxWebSocketStreamJS::New);
   tpl->SetClassName(Nan::New("WebxWebSocketStream").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 

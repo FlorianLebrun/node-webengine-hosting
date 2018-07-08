@@ -2,7 +2,7 @@
 
 Nan::Persistent<v8::Function> WebxHttpTransactionJS::constructor;
 
-void WebxHttpTransaction::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
+void WebxHttpTransactionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
   if (args.Length() != 3 || !args[0]->IsObject() || !args[1]->IsObject() || !args[2]->IsFunction())
@@ -10,14 +10,14 @@ void WebxHttpTransaction::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  WebxEngineHost *host = Nan::ObjectWrap::Unwrap<WebxEngineHost>(args[0]->ToObject());
+  WebxSession *session = Nan::ObjectWrap::Unwrap<WebxSession>(args[0]->ToObject());
   Local<Object> req = args[1]->ToObject();
   Local<Function> onComplete = args[2].As<v8::Function>();
 
   WebxHttpTransaction *transaction = new WebxHttpTransaction(req, onComplete);
   transaction->Wrap(args.This());
 
-  host->connector->dispatchTransaction(transaction);
+  session->context->dispatchTransaction(transaction);
 
   args.GetReturnValue().Set(args.This());
 }
@@ -57,7 +57,7 @@ v8::Local<v8::Function> WebxHttpTransactionJS::CreatePrototype()
   using namespace v8;
 
   // Prepare constructor template
-  Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(WebxHttpTransaction::New);
+  Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(WebxHttpTransactionJS::New);
   tpl->SetClassName(Nan::New("WebxHttpTransaction").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
