@@ -1,6 +1,6 @@
 import { debug } from "@common"
 import express from "express"
-import { WebxEngine } from "../lib/WebxEngine"
+import { CreateWebxEngine, WebxEngine } from "../lib/WebxEngine"
 import { WebsocketResponse } from "./WebsocketResponse"
 
 const modules = {}
@@ -9,35 +9,44 @@ function ipc_require(msg) {
   modules[msg.name] = require(msg.path)
 }
 
-function ipc_webx_connect(msg) {
-  const webxEngine = new WebxEngine()
-
-  const app = express()
-  app.use(webxEngine.dispatch)
-
-  webxEngine.addEventListener((type, data) => {
-    process.send({ type: "webx-event", event: type, data })
-  })
-
-  const server = app.listen(0, function () {
-    webxEngine.connect(msg, () => {
-      const { port } = server.address()
-      process.send({
-        type: "webx-listen",
-        engine: webxEngine.getName(),
-        address: "http://localhost:" + port,
-        host: "localhost",
-        port,
-      })
+function ipc_webx_connect(config) {
+  CreateWebxEngine(config, (engine: WebxEngine) => {
+    engine.createMainSession(config, (session: WebxSession) => {
+      openServer(engine, session)
     })
-  }).on("upgrade", function (req, socket, head) {
-    app.handle(req, WebsocketResponse(req, socket, head))
   })
 }
 
 function ipc_exec(msg) {
   const module = modules[msg.name]
   module[msg.method].apply(module, msg.args)
+}
+
+function openServer(engine, session) {
+  const app = express()
+  const server = app.listen(0, function () {
+    try {
+      app.use(session.dispatch.bind(session))
+
+      session.addEventListener((type, data) => {
+        process.send({ type: "webx-event", event: type, data })
+      })
+
+      const { port } = server.address()
+      process.send({
+        type: "webx-listen",
+        engine: engine.name,
+        address: "http://localhost:" + port,
+        host: "localhost",
+        port,
+      })
+    }
+    catch (e) {
+      console.error(e)
+    }
+  }).on("upgrade", function (req, socket, head) {
+    app.handle(req, WebsocketResponse(req, socket, head))
+  })
 }
 
 process.on("message", function (msg) {
