@@ -10,11 +10,14 @@ class WebxHttpTransactionJS;
 class WebxHttpResponse : public v8h::StringMapBasedAttributs<webx::IStream>
 {
 public:
+  enum tState { Pending, Writing, Completed };
+
+  tState state;
   WebxHttpTransaction *transaction;
   v8h::EventQueue<webx::IData> output;
 
   WebxHttpResponse(WebxHttpTransaction *transaction);
-  
+
   virtual bool connect(webx::IStream *stream) override;
   virtual bool write(webx::IData *data) override;
   virtual void close() override;
@@ -23,21 +26,26 @@ public:
   virtual void release() override;
 
   static void completeSync(uv_async_t *handle);
-  static void closeSync(uv_handle_t *handle);
 };
 
 class WebxHttpTransaction : public Nan::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::IHttpTransaction>>
 {
 public:
   friend WebxHttpTransactionJS;
-  webx::IStream* opposite;
+  webx::Ref<webx::IStream> opposite;
   WebxHttpResponse response;
-  v8::Persistent<v8::Function> onComplete;
-  
-  WebxHttpTransaction(v8::Local<v8::Object> req, v8::Local<v8::Function> onComplete);
+  v8::Persistent<v8::Function> onBegin;
+  v8::Persistent<v8::Function> onWrite;
+  v8::Persistent<v8::Function> onEnd;
+
+  WebxHttpTransaction(
+    v8::Local<v8::Object> req,
+    v8::Local<v8::Function> onBegin,
+    v8::Local<v8::Function> onWrite,
+    v8::Local<v8::Function> onEnd);
   ~WebxHttpTransaction();
-  
-  virtual bool connect(webx::IStream* stream) override;
+
+  virtual bool connect(webx::IStream *stream) override;
   virtual webx::IStream *getResponse() override;
   virtual void free() override;
 };

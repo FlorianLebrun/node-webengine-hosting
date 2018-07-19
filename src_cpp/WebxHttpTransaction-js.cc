@@ -5,16 +5,18 @@ Nan::Persistent<v8::Function> WebxHttpTransactionJS::constructor;
 void WebxHttpTransactionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  if (args.Length() != 3 || !args[0]->IsObject() || !args[1]->IsObject() || !args[2]->IsFunction())
+  if (args.Length() != 5 || !args[0]->IsObject() || !args[1]->IsObject() || !args[2]->IsFunction() || !args[3]->IsFunction() || !args[4]->IsFunction())
     Nan::ThrowTypeError("Wrong arguments");
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
   WebxSession *session = Nan::ObjectWrap::Unwrap<WebxSession>(args[0]->ToObject());
   Local<Object> req = args[1]->ToObject();
-  Local<Function> onComplete = args[2].As<v8::Function>();
+  Local<Function> onBegin = args[2].As<v8::Function>();
+  Local<Function> onWrite = args[3].As<v8::Function>();
+  Local<Function> onEnd = args[4].As<v8::Function>();
 
-  WebxHttpTransaction *transaction = new WebxHttpTransaction(req, onComplete);
+  WebxHttpTransaction *transaction = new WebxHttpTransaction(req, onBegin, onWrite, onEnd);
   transaction->Wrap(args.This());
 
   session->context->dispatchTransaction(transaction);
@@ -36,9 +38,8 @@ void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
       data->from = transaction;
       transaction->opposite->write(data);
     }
-    else {
-      printf(">>> Lost chunk\n"); 
-    }
+    else printf(">>> Lost chunk\n");
+    data->release();
   }
   else
     Nan::ThrowError("Cannot write this type of chunk");
@@ -48,8 +49,10 @@ void WebxHttpTransactionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &ar
 {
   using namespace v8;
   WebxHttpTransaction *transaction = Nan::ObjectWrap::Unwrap<WebxHttpTransaction>(args.Holder());
-  if (transaction->opposite)
+  if (transaction->opposite) {
     transaction->opposite->close();
+    transaction->opposite = 0;
+  }
 }
 
 v8::Local<v8::Function> WebxHttpTransactionJS::CreatePrototype()

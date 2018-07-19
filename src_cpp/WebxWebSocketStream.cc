@@ -4,7 +4,6 @@ WebxWebSocketStream::WebxWebSocketStream(v8::Local<v8::Object> req, v8::Local<v8
     : output(this, this->completeSync)
 {
   using namespace v8;
-  this->opposite = 0;
   this->status = Starting;
   this->prevStatus = Starting;
   this->onAccept.Reset(Isolate::GetCurrent(), onAccept);
@@ -79,16 +78,14 @@ void WebxWebSocketStream::completeSync(uv_async_t *handle)
 
   if (!_this->onMessage.IsEmpty())
   {
-    webx::IData *datagrams = _this->output.flush();
-    if (datagrams)
+    if (webx::Ref<webx::IData> datagrams = _this->output.flush())
     {
-      for (webx::IData *data = datagrams; data; data = (webx::IData *)data->next)
+      for (webx::IData *data = datagrams; data; data = data->next.cast<webx::IData>())
       {
         Local<Value> argv[] = {v8h::MakeString(data->bytes, data->size)};
         Local<Function> onMessage = Local<Function>::New(isolate, _this->onMessage);
         onMessage->Call(isolate->GetCurrentContext()->Global(), 1, argv);
       }
-      datagrams->release();
     }
   }
 

@@ -8,13 +8,13 @@ class WebxEngine;
 class WebxEngineJS;
 class WebxSession;
 
-class WebxEngine : public Nan::ObjectWrap, public webx::IEngineHost
+class WebxEngine : public Nan::ObjectWrap, public webx::Releasable<webx::IEngineHost>
 {
 public:
   friend WebxEngineJS;
 
-  webx::IEngineContext *context;
-  WebxSession* mainSession;
+  webx::Ref<webx::IEngineContext> context;
+  webx::Ref<WebxSession> mainSession;
 
   v8h::EventQueue<webx::IEvent> events;
   v8::Persistent<v8::Function> handleEvent;
@@ -25,6 +25,7 @@ public:
   void connect(const char *dllPath, const char *dllEntryPoint, const char *config);
   virtual void notify(webx::IEvent* event) override;
   virtual bool disconnect() override { throw "not imp"; }
+  virtual void free() override { delete this; }
 
   static void completeSync(uv_async_t *handle);
 };

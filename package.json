@@ -83,12 +83,10 @@
     }
   },
   "scripts": {
-    "start": "set PORT=1418 && nodemon --watch src --exec npm run debug",
+    "start": "nodemon --watch src --exec npm run debug",
     "debug": "babel src -d dist --source-maps && babel-node src/test/test --source-maps",
     "build": "node-gyp rebuild && babel src -d dist",
     "build:cpp": "node-gyp rebuild",
-    "build:js": "babel src -d dist",
-    "pack": "npm run build && npm pack",
-    "patch-system": "babel-node src/test/patch-system --source-maps"
+    "build:js": "babel src -d dist"
   }
 }

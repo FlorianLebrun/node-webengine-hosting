@@ -7,8 +7,6 @@ WebxEngine::WebxEngine(v8::Local<v8::Function> handleEvent)
   using namespace v8;
   Isolate *isolate = Isolate::GetCurrent();
 
-  this->context = 0;
-  this->mainSession = 0;
   this->handleEvent.Reset(Isolate::GetCurrent(), handleEvent);
 }
 
@@ -25,7 +23,7 @@ void WebxEngine::completeSync(uv_async_t *handle)
 {
   using namespace v8;
   WebxEngine *_this = (WebxEngine *)handle->data;
-  if (webx::IEvent *events = _this->events.flush())
+  if (webx::Ref<webx::IEvent> events = _this->events.flush())
   {
     Isolate *isolate = Isolate::GetCurrent();
     HandleScope scope(isolate);
@@ -37,7 +35,6 @@ void WebxEngine::completeSync(uv_async_t *handle)
       Local<Value> argv[] = { Nan::New(ev->eventName()).ToLocalChecked(), object.data };
       handleEvent->Call(isolate->GetCurrentContext()->Global(), 2, argv);
     }
-    events->release();
   }
 }
 

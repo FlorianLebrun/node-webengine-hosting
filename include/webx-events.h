@@ -23,7 +23,7 @@ namespace webx
   class IEvent : public IAttributs
   {
   public:
-    IEvent *next;
+    webx::Ref<IEvent> next;
     virtual int eventID() { return undefinedEventID; }
     virtual const char *eventName() { return "undefined"; }
   };
@@ -54,23 +54,16 @@ namespace webx
   class EventQueue
   {
   public:
-    CEvent *first, *_;
-    EventQueue()
-    {
+    CEvent* first, *_;
+    EventQueue() {
       this->first = 0;
     }
-    ~EventQueue()
-    {
-      IEvent *d = this->first;
-      while (d)
-      {
-        IEvent *dn = d->next;
-        d->release();
-        d = dn;
-      }
+    ~EventQueue() {
+      if (this->first) this->first->release();
     }
     void push(CEvent *data)
     {
+      data->retain();
       data->next = 0;
       if (this->first)
         this->_->next = data;
@@ -78,21 +71,21 @@ namespace webx
         this->first = data;
       this->_ = data;
     }
-    CEvent *pop()
+    Ref<CEvent> pop()
     {
-      CEvent *data = this->first;
+      CEvent* data = this->first;
       if (data)
       {
-        this->first = (CEvent*)data->next;
+        this->first = data->next;
         data->next = 0;
       }
-      return data;
+      return New(data);
     }
-    CEvent *flush()
+    Ref<CEvent> flush()
     {
-      CEvent *data = this->first;
+      CEvent* data = this->first;
       this->first = 0;
-      return data;
+      return New(data);
     }
     operator bool() {
       return this->first != 0;
@@ -114,9 +107,6 @@ namespace webx
       }
       virtual void free() override
       {
-        if (this->next) {
-          this->next->release();
-        }
         ::free(this);
       }
     };

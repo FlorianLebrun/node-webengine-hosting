@@ -90,14 +90,17 @@ export class WebxSession {
 
     }
     else {
-      const transaction = new addon.WebxHttpTransaction(this.handle, req, (status, headers, buffer) => {
-        res.set(headers).status(status).send(buffer)
-      })
+      const transaction = new addon.WebxHttpTransaction(this.handle, req,
+        function (status, headers) {
+          res.set(headers).status(status)
+        }, function (bufferOut) {
+          res.write(bufferOut)
+        }, function () {
+          res.end()
+        })
 
-      req.setEncoding("utf8")
-
-      req.on("data", function (chunk) {
-        transaction.write(chunk)
+      req.on("data", function (bufferIn) {
+        transaction.write(bufferIn)
       })
 
       req.on("end", () => {

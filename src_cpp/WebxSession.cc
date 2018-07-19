@@ -22,7 +22,7 @@ void WebxSession::completeSync(uv_async_t *handle)
 {
   using namespace v8;
   WebxSession *_this = (WebxSession *)handle->data;
-  if (webx::IEvent *events = _this->events.flush())
+  if (webx::Ref<webx::IEvent> events = _this->events.flush())
   {
     Isolate *isolate = Isolate::GetCurrent();
     HandleScope scope(isolate);
@@ -34,7 +34,6 @@ void WebxSession::completeSync(uv_async_t *handle)
       Local<Value> argv[] = { Nan::New(ev->eventName()).ToLocalChecked(), object.data };
       handleEvent->Call(isolate->GetCurrentContext()->Global(), 2, argv);
     }
-    events->release();
   }
 }
 

@@ -16,7 +16,7 @@ public:
   v8::Persistent<v8::Function> onClose;
 
   // For inbound stream
-  webx::IStream* opposite;
+  webx::Ref<webx::IStream> opposite;
   v8::Persistent<v8::Function> onAccept;
   v8::Persistent<v8::Function> onReject;
 

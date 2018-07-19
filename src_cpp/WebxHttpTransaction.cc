@@ -1,14 +1,18 @@
 #include "./WebxHttpTransaction.h"
 
-// ------------------------------------------
-// Transaction request
+static std::atomic<intptr_t> leakcount = 0;
 
-WebxHttpTransaction::WebxHttpTransaction(v8::Local<v8::Object> req, v8::Local<v8::Function> onComplete)
+WebxHttpTransaction::WebxHttpTransaction(
+  v8::Local<v8::Object> req,
+  v8::Local<v8::Function> onBegin,
+  v8::Local<v8::Function> onWrite,
+  v8::Local<v8::Function> onEnd)
   : response(this)
 {
   using namespace v8;
-  this->opposite = 0;
-  this->onComplete.Reset(Isolate::GetCurrent(), onComplete);
+  this->onBegin.Reset(Isolate::GetCurrent(), onBegin);
+  this->onWrite.Reset(Isolate::GetCurrent(), onWrite);
+  this->onEnd.Reset(Isolate::GetCurrent(), onEnd);
 
   // Set request pseudo headers
   this->setAttributStringV8(":method", v8h::GetIn(req, "method"));
@@ -25,9 +29,11 @@ WebxHttpTransaction::WebxHttpTransaction(v8::Local<v8::Object> req, v8::Local<v8
     Local<Value> key = keys->Get(i);
     this->setAttributStringV8(key, headers->Get(key));
   }
+  printf("<WebxHttpTransaction %d>\n", ++leakcount);
 }
 WebxHttpTransaction::~WebxHttpTransaction()
 {
+  printf("<WebxHttpTransaction %d>\n", --leakcount);
 }
 webx::IStream *WebxHttpTransaction::getResponse()
 {
@@ -39,10 +45,11 @@ bool WebxHttpTransaction::connect(webx::IStream *stream)
   return true;
 }
 
-void WebxHttpTransaction::free() {
-  printf("WebxHttpTransaction leak !\n");
+void WebxHttpTransaction::free()
+{
+  _ASSERT(!this->response.output.flush());
+  delete this;
 }
-
 
 // ------------------------------------------
 // Transaction response
@@ -51,13 +58,16 @@ WebxHttpResponse::WebxHttpResponse(WebxHttpTransaction *transaction)
   : output(this, this->completeSync)
 {
   this->transaction = transaction;
+  this->state = Pending;
 }
 
-void WebxHttpResponse::retain() {
+void WebxHttpResponse::retain()
+{
   this->transaction->retain();
 }
 
-void WebxHttpResponse::release() {
+void WebxHttpResponse::release()
+{
   this->transaction->release();
 }
 
@@ -77,42 +87,24 @@ void WebxHttpResponse::close()
   this->output.complete();
 }
 
-
-struct ResponseVisitor : public webx::StringAttributsVisitor<webx::IAttributsVisitor>
+struct ResponseHeaders : public webx::StringAttributsVisitor<webx::IAttributsVisitor>
 {
   int statusCode;
   v8::Local<v8::Object> headers;
-  v8::Local<v8::Value> body;
 
-  ResponseVisitor(WebxHttpResponse* response)
-    : statusCode(0), headers(Nan::New<v8::Object>()), body(getBody(response))
+  ResponseHeaders(WebxHttpResponse *response)
+    : statusCode(0), headers(Nan::New<v8::Object>())
   {
     response->visitAttributs(this);
   }
   virtual void visitString(const char *name, const char *value) override
   {
-    if (name[0] == ':') this->statusCode = atoi(value);
-    else this->headers->Set(Nan::New(name).ToLocalChecked(), Nan::New(value).ToLocalChecked());
-  }
-
-  static v8::Local<v8::Value> getBody(WebxHttpResponse* response)
-  {
-    using namespace v8;
-    webx::IData *data = response->output.flush();
-    if (data)
-    {
-      if (!data->next)
-      {
-        v8::Local<v8::Value> buffer = Nan::CopyBuffer((char *)data->bytes, data->size).ToLocalChecked();
-        data->release();
-        return buffer;
-      }
-      else
-      {
-        throw "WebxHttpResponse::NewBuffer";
+    if (name[0] == ':') {
+      if (!stricmp(name, ":status")) {
+        this->statusCode = atoi(value);
       }
     }
-    return Nan::Undefined();
+    else this->headers->Set(Nan::New(name).ToLocalChecked(), Nan::New(value).ToLocalChecked());
   }
 };
 
@@ -123,22 +115,35 @@ void WebxHttpResponse::completeSync(uv_async_t *handle)
   Isolate *isolate = Isolate::GetCurrent();
   HandleScope scope(isolate);
 
-  ResponseVisitor response(_this);
-  Local<Value> argv[] = {
-    /*status*/ Nan::New(response.statusCode),
-    /*headers*/ response.headers,
-    /*buffer*/ response.body };
-  Local<Function> onComplete = Local<Function>::New(isolate, _this->transaction->onComplete);
-  onComplete->Call(isolate->GetCurrentContext()->Global(), 3, argv);
+  // Initiate the response stream
+  if (_this->state == Pending) {
+    ResponseHeaders response(_this);
+    Local<Value> argv[] = { /*status*/ Nan::New(response.statusCode), /*headers*/ response.headers };
+    Local<Function> onBegin = Local<Function>::New(isolate, _this->transaction->onBegin);
+    onBegin->Call(isolate->GetCurrentContext()->Global(), 2, argv);
+    _this->state = Writing;
+  }
 
-  _this->output.close(_this->closeSync);
-}
+  // Write into the response stream
+  if (_this->state == Writing) {
 
+    // Write buffers
+    if (webx::Ref<webx::IData> output = _this->output.flush())
+    {
+      Local<Function> onWrite = Local<Function>::New(isolate, _this->transaction->onWrite);
+      for (webx::IData* data = output; data; data = data->next.cast<webx::IData>())
+      {
+        v8::Local<v8::Value> buffer = node::Buffer::Copy(v8::Isolate::GetCurrent(), data->bytes, data->size).ToLocalChecked();
+        Local<Value> argv[] = { /*status*/ buffer };
+        onWrite->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+      }
+    }
 
-void WebxHttpResponse::closeSync(uv_handle_t *handle) {
-  WebxHttpResponse *_this = (WebxHttpResponse *)handle->data;
-  WebxHttpTransaction *transaction = _this->transaction;
-  _this->transaction = 0;
-  transaction->persistent().Reset();
-  delete transaction;
+    // Close the response stream
+    if (_this->output.is_completed()) {
+      Local<Function> onEnd = Local<Function>::New(isolate, _this->transaction->onEnd);
+      onEnd->Call(isolate->GetCurrentContext()->Global(), 0, 0);
+      _this->state = Completed;
+    }
+  }
 }

@@ -68,7 +68,7 @@ public:
   virtual bool disconnect() = 0;
 };
 
-class IEngineContext
+class IEngineContext : public IReleasable
 {
 public:
   virtual const char *getName() = 0;
@@ -77,7 +77,7 @@ public:
   virtual bool close() = 0;
 };
 
-class IEngineHost
+class IEngineHost : public IReleasable
 {
 public:
   virtual void notify(IEvent *event) = 0;
