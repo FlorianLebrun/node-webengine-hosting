@@ -91,19 +91,20 @@ export class WebxSession {
     }
     else {
       const transaction = new addon.WebxHttpTransaction(this.handle, req,
-        function (status, headers) {
-          res.set(headers).status(status)
-        }, function (bufferOut) {
+        function handleSend(status, headers, buffer) {
+          res.set(headers).status(status).send(buffer)
+        },
+        function handleChunk(bufferOut) {
           res.write(bufferOut)
-        }, function () {
+        },
+        function handleEnd() {
           res.end()
-        })
-
-      req.on("data", function (bufferIn) {
+        }
+      )
+      req.on("data", function handleChunk(bufferIn) {
         transaction.write(bufferIn)
       })
-
-      req.on("end", () => {
+      req.on("end", function handleEnd() {
         transaction.close()
       })
     }

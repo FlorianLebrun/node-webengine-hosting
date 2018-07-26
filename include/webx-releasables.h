@@ -64,6 +64,10 @@ namespace webx
     return ref;
   }
 
+#ifdef _DEBUG
+  static std::atomic<int> _s_object_count;
+#endif
+
   template <class CReleasable>
   class Releasable : public CReleasable
   {
@@ -72,6 +76,13 @@ namespace webx
 
     Releasable() : nref(1)
     {
+#ifdef _DEBUG
+      _s_object_count++;
+      printf("(+) object %d\n", (int)_s_object_count);
+      if (_s_object_count > 20) {
+        printf("leak! %d\n", (int)_s_object_count);
+      }
+#endif
     }
     virtual void retain() override
     {
@@ -79,7 +90,14 @@ namespace webx
     }
     virtual void release() override
     {
-      if ((--this->nref) == 0) {
+      if ((--this->nref) <= 0) {
+#ifdef _DEBUG
+        _s_object_count--;
+        printf("(-) object %d\n", (int)_s_object_count);
+        if (this->nref < 0) {
+          printf("(!) crash risk\n");
+        }
+#endif
         this->free();
       }
     }

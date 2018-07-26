@@ -16,7 +16,6 @@ class IAttributs;
 
 class IPipeable;
 class IStream;
-class IHttpTransaction;
 
 class ISessionContext;
 class IEngineContext;
@@ -40,17 +39,10 @@ public:
   virtual void close() = 0;
 };
 
-class IHttpTransaction : public IPipeable
-{
-public:
-  // Provide the stream for response delivery
-  virtual IStream *getResponse() = 0;
-};
-
 class IEndPoint : public IAttributs
 {
 public:
-  virtual void dispatchTransaction(IHttpTransaction *transaction) = 0;
+  virtual void dispatchTransaction(IStream *request) = 0;
   virtual void dispatchWebSocket(IStream *stream) = 0;
   virtual void notify(IEvent *event) = 0;
 };

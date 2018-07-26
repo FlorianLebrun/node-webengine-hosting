@@ -17,9 +17,9 @@ public:
   webx::Ref<WebxSession> mainSession;
 
   v8h::EventQueue<webx::IEvent> events;
-  v8::Persistent<v8::Function> handleEvent;
+  v8::Persistent<v8::Function> onEvent;
 
-  WebxEngine(v8::Local<v8::Function> handleEvent);
+  WebxEngine(v8::Local<v8::Function> onEvent);
   ~WebxEngine();
 
   void connect(const char *dllPath, const char *dllEntryPoint, const char *config);
@@ -27,7 +27,10 @@ public:
   virtual bool disconnect() override { throw "not imp"; }
   virtual void free() override { delete this; }
 
-  static void completeSync(uv_async_t *handle);
+  void completeEvents();
+  static void completeEvents_sync(uv_async_t *handle) {
+    ((WebxEngine*)handle->data)->completeEvents();
+  }
 };
 
 class WebxEngineJS

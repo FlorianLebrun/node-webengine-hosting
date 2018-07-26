@@ -22,7 +22,7 @@ public:
   ~WebxSession();
 
   virtual void notify(webx::IEvent* event) override;
-  virtual void dispatchTransaction(webx::IHttpTransaction *transaction) override {}
+  virtual void dispatchTransaction(webx::IStream *request) override {}
   virtual void dispatchWebSocket(webx::IStream *stream) override {}
   virtual bool disconnect() override { throw "not imp"; }
 

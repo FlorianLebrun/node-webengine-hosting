@@ -12,11 +12,11 @@ void WebxHttpTransactionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args
 
   WebxSession *session = Nan::ObjectWrap::Unwrap<WebxSession>(args[0]->ToObject());
   Local<Object> req = args[1]->ToObject();
-  Local<Function> onBegin = args[2].As<v8::Function>();
-  Local<Function> onWrite = args[3].As<v8::Function>();
+  Local<Function> onSend = args[2].As<v8::Function>();
+  Local<Function> onChunk = args[3].As<v8::Function>();
   Local<Function> onEnd = args[4].As<v8::Function>();
 
-  WebxHttpTransaction *transaction = new WebxHttpTransaction(req, onBegin, onWrite, onEnd);
+  WebxHttpTransaction *transaction = new WebxHttpTransaction(req, onSend, onChunk, onEnd);
   transaction->Wrap(args.This());
 
   session->context->dispatchTransaction(transaction);
@@ -33,10 +33,9 @@ void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
 
   if (webx::IData *data = v8h::NewDataFromValue(args[0]))
   {
-    if (transaction->opposite)
+    if (transaction->input)
     {
-      data->from = transaction;
-      transaction->opposite->write(data);
+      transaction->input->write(data);
     }
     else printf(">>> Lost chunk\n");
     data->release();
@@ -49,9 +48,9 @@ void WebxHttpTransactionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &ar
 {
   using namespace v8;
   WebxHttpTransaction *transaction = Nan::ObjectWrap::Unwrap<WebxHttpTransaction>(args.Holder());
-  if (transaction->opposite) {
-    transaction->opposite->close();
-    transaction->opposite = 0;
+  if (transaction->input) {
+    transaction->input->close();
+    transaction->input = 0;
   }
 }
 

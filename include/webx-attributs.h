@@ -23,7 +23,9 @@ namespace webx
   class BuiltinAttributs; // For object with hard coded attributs
   template <class CAttributs>
   class NoAttributs; // For object with no attributs
-  template <class CAttributs>
+  struct CaseInsensitive;
+  struct CaseSensitive;
+  template <class CAttributs, class KeyCompare = CaseInsensitive>
   class StringMapBasedAttributs; // For object with std::map attributs
 
   // Interface of attributs visitor
@@ -40,7 +42,6 @@ namespace webx
   class IAttributs : public IReleasable
   {
   public:
-    virtual int32_t getAttributCount() = 0;
     virtual void visitAttributs(IAttributsVisitor *visitor) = 0;
     virtual bool hasAttribut(const char *name) = 0;
     virtual bool removeAttribut(const char *name) = 0;
@@ -98,7 +99,7 @@ namespace webx
     Visitor visitor;
     this->visitAttributs(&visitor);
   }
-  
+
   template <class CAttributsVisitor = IAttributsVisitor>
   class StringAttributsVisitor : public CAttributsVisitor
   {
@@ -122,10 +123,6 @@ namespace webx
   class NoAttributs : public CAttributs
   {
   public:
-    virtual int32_t getAttributCount() override
-    {
-      return 0;
-    }
     virtual void visitAttributs(IAttributsVisitor *visitor) override
     {
     }
@@ -167,20 +164,6 @@ namespace webx
   class BuiltinAttributs : public NoAttributs<CAttributs>
   {
   public:
-    virtual int32_t getAttributCount() override
-    {
-      struct Visitor : public IAttributsVisitor {
-        int count;
-        Visitor():count(0){}
-        virtual void visitInt(const char *name, int64_t value) override { this->count++; }
-        virtual void visitFloat(const char *name, double value) override { this->count++; }
-        virtual void visitString(const char *name, const char *value) override { this->count++; }
-        virtual void visitObject(const char *name, IAttributs *value) override { this->count++; }
-      };
-      Visitor visitor;
-      this->visitAttributs(&visitor);
-      return visitor.count;
-    }
     virtual bool hasAttribut(const char *name) override
     {
       struct Visitor : public IAttributsVisitor {
@@ -199,21 +182,28 @@ namespace webx
     }
   };
 
-  template <class CAttributs>
+  struct CaseInsensitive { 
+    bool operator() (const std::string& lhs, const std::string& rhs) const {
+      return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+    }
+  };
+  struct CaseSensitive { 
+    bool operator() (const std::string& lhs, const std::string& rhs) const {
+      return strcmp(lhs.c_str(), rhs.c_str()) < 0;
+    }
+  };
+
+  template <class CAttributs, class KeyCompare>
   class StringMapBasedAttributs : public NoAttributs<CAttributs>
   {
   public:
-    typedef std::map<std::string, std::string> tAttributs;
+    typedef std::map<std::string, std::string, KeyCompare> tAttributs;
 
     tAttributs attributs;
 
     virtual bool hasAttribut(const char *name) override
     {
       return this->attributs.find(name) != this->attributs.end();
-    }
-    virtual int getAttributCount() override
-    {
-      return this->attributs.size();
     }
     virtual void visitAttributs(webx::IAttributsVisitor *visitor) override
     {
@@ -264,7 +254,7 @@ namespace webx
       }
       return false;
     }
-    virtual bool setAttributString(const char *name, const char *value, int size) override
+    virtual bool setAttributString(const char *name, const char *value, int size = -1) override
     {
       if(value) {
         if (size < 0)

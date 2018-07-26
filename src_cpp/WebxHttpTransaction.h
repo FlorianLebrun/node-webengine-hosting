@@ -7,47 +7,33 @@
 class WebxHttpTransaction;
 class WebxHttpTransactionJS;
 
-class WebxHttpResponse : public v8h::StringMapBasedAttributs<webx::IStream>
-{
-public:
-  enum tState { Pending, Writing, Completed };
-
-  tState state;
-  WebxHttpTransaction *transaction;
-  v8h::EventQueue<webx::IData> output;
-
-  WebxHttpResponse(WebxHttpTransaction *transaction);
-
-  virtual bool connect(webx::IStream *stream) override;
-  virtual bool write(webx::IData *data) override;
-  virtual void close() override;
-
-  virtual void retain() override;
-  virtual void release() override;
-
-  static void completeSync(uv_async_t *handle);
-};
-
-class WebxHttpTransaction : public Nan::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::IHttpTransaction>>
+class WebxHttpTransaction : public Nan::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::IStream>>
 {
 public:
   friend WebxHttpTransactionJS;
-  webx::Ref<webx::IStream> opposite;
-  WebxHttpResponse response;
-  v8::Persistent<v8::Function> onBegin;
-  v8::Persistent<v8::Function> onWrite;
+
+  webx::Ref<webx::IStream> input;
+  v8h::EventQueue<webx::IData> output;
+  v8::Persistent<v8::Function> onSend;
+  v8::Persistent<v8::Function> onChunk;
   v8::Persistent<v8::Function> onEnd;
 
   WebxHttpTransaction(
     v8::Local<v8::Object> req,
-    v8::Local<v8::Function> onBegin,
-    v8::Local<v8::Function> onWrite,
+    v8::Local<v8::Function> onSend,
+    v8::Local<v8::Function> onChunk,
     v8::Local<v8::Function> onEnd);
   ~WebxHttpTransaction();
 
   virtual bool connect(webx::IStream *stream) override;
-  virtual webx::IStream *getResponse() override;
+  virtual bool write(webx::IData *data) override;
+  virtual void close() override;
   virtual void free() override;
+
+  void completeEvents();
+  static void completeEvents_sync(uv_async_t *handle) {
+    ((WebxHttpTransaction*)handle->data)->completeEvents();
+  }
 };
 
 class WebxHttpTransactionJS

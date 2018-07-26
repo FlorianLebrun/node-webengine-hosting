@@ -18,18 +18,21 @@ public:
   WebxEngine* engine;
   webx::ISessionContext *context;
   v8h::EventQueue<webx::IEvent> events;
-  v8::Persistent<v8::Function> handleEvent;
+  v8::Persistent<v8::Function> onEvent;
 
-  WebxSession(v8::Local<v8::Function> handleEvent);
+  WebxSession(v8::Local<v8::Function> onEvent);
   ~WebxSession();
 
   virtual void notify(webx::IEvent* event) override;
-  virtual void dispatchTransaction(webx::IHttpTransaction *transaction) override {}
+  virtual void dispatchTransaction(webx::IStream *request) override {}
   virtual void dispatchWebSocket(webx::IStream *stream) override {}
   virtual bool disconnect() override { throw "not imp"; }
   virtual void free() override;
 
-  static void completeSync(uv_async_t *handle);
+  void completeEvents();
+  static void completeEvents_sync(uv_async_t *handle) {
+    ((WebxSession*)handle->data)->completeEvents();
+  }
 };
 
 class WebxSessionJS

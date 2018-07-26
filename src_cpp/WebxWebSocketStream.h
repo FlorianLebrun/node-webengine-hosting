@@ -35,8 +35,10 @@ public:
 
   void read(webx::IData* data);
 
-  static void completeSync(uv_async_t *handle);
-
+  void completeEvents();
+  static void completeEvents_sync(uv_async_t *handle) {
+    ((WebxWebSocketStream*)handle->data)->completeEvents();
+  }
 };
 
 class WebxWebSocketStreamJS

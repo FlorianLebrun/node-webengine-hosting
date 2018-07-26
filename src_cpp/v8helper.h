@@ -39,17 +39,13 @@ namespace v8h
     {
       char* bufferData = node::Buffer::Data(value);
       size_t bufferLength = node::Buffer::Length(value);
-      webx::IData *data = webx::IData::New(bufferLength);
-      memcpy(data->bytes, bufferData, data->size);
-      return data;
+      return webx::IData::New(bufferData, bufferLength);
     }
     else if (value->IsString())
     {
       v8::Local<v8::String> s = value->ToString();
       v8::String::Utf8Value bytes(s);
-      webx::IData *data = webx::IData::New(bytes.length());
-      memcpy(data->bytes, *bytes, data->size);
-      return data;
+      return webx::IData::New(*bytes, bytes.length());
     }
     return 0;
   }
@@ -134,7 +130,7 @@ namespace v8h
   };
 
   template <class T>
-  class StringMapBasedAttributs : public webx::StringMapBasedAttributs<T>
+  class StringMapBasedAttributs : public webx::StringMapBasedAttributs<T, webx::CaseInsensitive>
   {
   public:
     void setAttributStringV8(v8::Local<v8::Value> name, v8::Local<v8::Value> value)

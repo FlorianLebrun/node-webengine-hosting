@@ -32,14 +32,16 @@ namespace webx
   class IData : public IEvent
   {
   public:
-    IPipeable *from;
-    uint32_t allocated;
-    uint32_t size;
-    char *bytes;
-
     virtual int eventID() override { return dataEventID; }
     virtual const char *eventName() override { return "data"; }
-    static IData *New(int size);
+
+    // getData: provide buffer, and return true when data is full, false when is chunked
+    virtual bool getData(char* &buffer, uint32_t &size) = 0;
+
+    // getOrigin: provide the pipe which send the data
+    virtual IPipeable* getOrigin() { return 0; }
+
+    static IData *New(const char* buffer, int size);
   };
 
   // -------------------------------------------------
@@ -92,25 +94,30 @@ namespace webx
     }
   };
 
-  inline IData *IData::New(int size)
+  inline IData *IData::New(const char* buffer, int size)
   {
     class Data : public NoAttributs<Releasable<IData>>
     {
     public:
+      uint32_t size;
       char buffer[1];
-      Data(int size)
+      Data(const char* buffer, uint32_t size)
       {
         this->next = 0;
-        this->from = 0;
         this->size = size;
-        this->bytes = this->buffer;
+        memcpy(this->buffer, buffer, size);
+      }
+      virtual bool getData(char* &buffer, uint32_t &size) {
+        buffer = this->buffer;
+        size = this->size;
+        return true;
       }
       virtual void free() override
       {
         ::free(this);
       }
     };
-    return new (::malloc(sizeof(Data) + size)) Data(size);
+    return new (::malloc(sizeof(Data) + size)) Data(buffer, size);
   }
 } // namespace webx
 #endif

@@ -1,7 +1,7 @@
 #include "./WebxWebSocketStream.h"
 
 WebxWebSocketStream::WebxWebSocketStream(v8::Local<v8::Object> req, v8::Local<v8::Function> onAccept, v8::Local<v8::Function> onReject)
-    : output(this, this->completeSync)
+    : output(this, this->completeEvents_sync)
 {
   using namespace v8;
   this->status = Starting;
@@ -40,7 +40,6 @@ bool WebxWebSocketStream::connect(webx::IStream *stream)
 
 void WebxWebSocketStream::read(webx::IData *data)
 {
-  data->from = this;
   if (this->opposite)
   {
     this->opposite->write(data);
@@ -69,51 +68,53 @@ void WebxWebSocketStream::free() {
   printf("WebxWebSocketStream leak !\n");
 }
 
-void WebxWebSocketStream::completeSync(uv_async_t *handle)
+void WebxWebSocketStream::completeEvents()
 {
   using namespace v8;
-  WebxWebSocketStream *_this = (WebxWebSocketStream *)handle->data;
   Isolate *isolate = Isolate::GetCurrent();
   HandleScope scope(isolate);
 
-  if (!_this->onMessage.IsEmpty())
+  if (!this->onMessage.IsEmpty())
   {
-    if (webx::Ref<webx::IData> datagrams = _this->output.flush())
+    if (webx::Ref<webx::IData> datagrams = this->output.flush())
     {
       for (webx::IData *data = datagrams; data; data = data->next.cast<webx::IData>())
       {
-        Local<Value> argv[] = {v8h::MakeString(data->bytes, data->size)};
-        Local<Function> onMessage = Local<Function>::New(isolate, _this->onMessage);
+        char* buffer;
+        uint32_t size;
+        data->getData(buffer, size);
+        Local<Value> argv[] = {v8h::MakeString(buffer, size)};
+        Local<Function> onMessage = Local<Function>::New(isolate, this->onMessage);
         onMessage->Call(isolate->GetCurrentContext()->Global(), 1, argv);
       }
     }
   }
 
-  if (_this->status != _this->prevStatus)
+  if (this->status != this->prevStatus)
   {
-    switch (_this->status)
+    switch (this->status)
     {
     case Accepted:
     {
-      Local<Value> argv[] = {_this->persistent().Get(isolate)};
-      Local<Function> onAccept = Local<Function>::New(isolate, _this->onAccept);
+      Local<Value> argv[] = {this->persistent().Get(isolate)};
+      Local<Function> onAccept = Local<Function>::New(isolate, this->onAccept);
       onAccept->Call(isolate->GetCurrentContext()->Global(), 1, argv);
     }
     break;
     case Rejected:
     {
       Local<Value> argv[] = {Nan::New(404)};
-      Local<Function> onReject = Local<Function>::New(isolate, _this->onReject);
+      Local<Function> onReject = Local<Function>::New(isolate, this->onReject);
       onReject->Call(isolate->GetCurrentContext()->Global(), 1, argv);
     }
     break;
     case Closed:
     {
-      Local<Function> onClose = Local<Function>::New(isolate, _this->onClose);
+      Local<Function> onClose = Local<Function>::New(isolate, this->onClose);
       onClose->Call(isolate->GetCurrentContext()->Global(), 0, 0);
     }
     break;
     }
-    _this->prevStatus = _this->status;
+    this->prevStatus = this->status;
   }
 }
