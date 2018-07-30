@@ -3,6 +3,7 @@ import { debug } from "@common"
 const addon = require("bindings")("addon")
 
 function NotOnline(req, res) { res.status(404).send("Application not online") }
+function Nop() { }
 
 export class WebxSession {
   handle: addon.WebxSession = null
@@ -12,7 +13,7 @@ export class WebxSession {
 
   constructor(engine: WebxEngine, onReady: Function) {
     this.engine = engine
-    this.onReady = onReady
+    this.onReady = onReady || Nop
   }
   get name() {
     return this.handle.getName()
@@ -119,7 +120,7 @@ export class WebxEngine {
 
   constructor(options: Object, onReady: Function): Promise {
     this.options = options
-    this.onReady = onReady
+    this.onReady = onReady || Nop
 
     // Update process environement
     options.cd && process.chdir(options.cd)
