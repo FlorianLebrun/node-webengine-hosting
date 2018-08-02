@@ -6,17 +6,15 @@
 
 class WebxSession;
 class WebxSessionJS;
-class WebxMainSessionJS;
 class WebxEngine;
 
 class WebxSession : public Nan::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::ISessionHost>>
 {
 public:
   friend WebxSessionJS;
-  friend WebxMainSessionJS;
 
   WebxEngine* engine;
-  webx::ISessionContext *context;
+  webx::Ref<webx::ISessionContext> context;
   v8h::EventQueue<webx::IEvent> events;
   v8::Persistent<v8::Function> onEvent;
 
@@ -24,9 +22,9 @@ public:
   ~WebxSession();
 
   virtual void notify(webx::IEvent* event) override;
-  virtual void dispatchTransaction(webx::IStream *request) override {}
-  virtual void dispatchWebSocket(webx::IStream *stream) override {}
-  virtual bool disconnect() override { throw "not imp"; }
+  virtual void dispatchTransaction(webx::IStream *request) override;
+  virtual void dispatchWebSocket(webx::IStream *stream) override;
+  virtual bool disconnect() override;
   virtual void free() override;
 
   void completeEvents();
@@ -43,14 +41,7 @@ public:
   static void New(const Nan::FunctionCallbackInfo<v8::Value> &onNotification);
 
   static void getName(const Nan::FunctionCallbackInfo<v8::Value> &args);
-};
-
-class WebxMainSessionJS : WebxSessionJS
-{
-public:
-  static Nan::Persistent<v8::Function> constructor;
-  static v8::Local<v8::Function> CreatePrototype();
-  static void New(const Nan::FunctionCallbackInfo<v8::Value> &onNotification);
+  static void close(const Nan::FunctionCallbackInfo<v8::Value> &args);
 };
 
 #endif

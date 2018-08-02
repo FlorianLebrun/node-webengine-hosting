@@ -60,20 +60,16 @@ public:
   virtual bool disconnect() = 0;
 };
 
-class IEngineContext : public IReleasable
+class IEngineContext : public ISessionContext
 {
 public:
-  virtual const char *getName() = 0;
-  virtual ISessionContext *createMainSession(ISessionHost *host, const char *config) = 0;
   virtual ISessionContext *createSession(ISessionHost *host, const char* name, const char *config) = 0;
-  virtual bool close() = 0;
 };
 
-class IEngineHost : public IReleasable
+class IEngineHost : public ISessionHost
 {
 public:
-  virtual void notify(IEvent *event) = 0;
-  virtual bool disconnect() = 0;
+
 };
 
 typedef IEngineContext *(*tEngineConnectProc)(IEngineHost *host, const char *config);

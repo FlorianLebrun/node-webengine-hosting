@@ -1,65 +1,44 @@
 import { debug } from "@common"
-
 const addon = require("bindings")("addon")
 
-function NotOnline(req, res) { res.status(404).send("Application not online") }
-function Nop() { }
-
 export class WebxSession {
+  readyState: boolean = false
   handle: addon.WebxSession = null
   engine: WebxEngine
-  listeners = []
-  onReady: Function
 
-  constructor(engine: WebxEngine, onReady: Function) {
-    this.engine = engine
-    this.onReady = onReady || Nop
-  }
   get name() {
-    return this.handle.getName()
+    return this.handle && this.handle.getName()
   }
-  openSession(name: string, options: Object) {
-    this.handle = new addon.WebxSession(
-      this.engine.handle,
-      name,
-      JSON.stringify(options.config),
-      this.handleEvent.bind(this)
-    )
-    return this
-  }
-  openMainSession(options: Object) {
-    this.handle = new addon.WebxMainSession(
-      this.engine.handle,
-      JSON.stringify(options.config),
-      this.handleEvent.bind(this)
-    )
-    return this
-  }
-  addEventListener(callback: Function) {
-    this.listeners.push(callback)
-  }
-  removeEventListener(callback: Function) {
-    this.listeners && this.listeners.splice(this.listeners.indexOf(callback), 1)
-  }
-  handleEvent(type: string, data: any) {
-    switch (type) {
-      case "Session.startup":
-        debug.info("[Session.startup]", this.name)
-        this.readyState = true
-        this.onReady(this)
-        break
-      case "Session.terminate":
-        this.readyState = false
-        debug.info("[Session.terminate]", this.name)
-        break
-      default:
-        console.log("[", type, "]", data && JSON.stringify(data))
+  connect(name: string, options: Object, engine: WebxEngine) {
+    if (!this.handle && !this.readyState) {
+      this.engine = engine
+      this.handle = new addon.WebxSession(
+        engine.handle,
+        name,
+        JSON.stringify(options),
+        WebxSession__handleEvent.bind(this)
+      )
     }
-    for (const cb of this.listeners) {
-      cb(type, data)
-    }
+    else throw new Error("WebxSession.connect invalid")
   }
-  dispatch(req, res, next) {
+  disconnect() {
+    if (this.readyState) {
+      debug.info("WebxSession.disconnect", this.name)
+      this.readyState = false
+      this.handle.close()
+    }
+    else throw new Error("WebxSession.disconnect invalid")
+  }
+  onStartup(data: any) {
+    throw new Error("WebxEngine.onStartup shall be overriden")
+  }
+  onEvent(type: string, data: any) {
+    throw new Error("WebxEngine.onEvent shall be overriden")
+  }
+  onTerminate(data: any) {
+    throw new Error("WebxEngine.onTerminate shall be overriden")
+  }
+  dispatch(req, res) {
     if (req.upgrade) {
       const stream = new addon.WebxWebSocketStream(this.handle, req, (data) => {
         const ws = res.accept()
@@ -113,81 +92,84 @@ export class WebxSession {
 }
 
 export class WebxEngine {
-  handle: addon.WebxEngine
-  mainSession: WebxSession = null
-  listeners = []
-  onReady: Function
+  readyState: boolean = false
+  handle: addon.WebxEngine = null
 
-  constructor(options: Object, onReady: Function): Promise {
-    this.options = options
-    this.onReady = onReady || Nop
-
-    // Update process environement
-    options.cd && process.chdir(options.cd)
-    for (const key in options.envs) {
-      process.env[key] = options.envs[key]
-    }
-
-    // Open engine
-    this.handle = new addon.WebxEngine(
-      options.dll.path,
-      options.dll.entryName,
-      JSON.stringify(options.config),
-      this.handleEvent.bind(this)
-    )
-  }
   get name() {
-    return this.handle.getName()
+    return this.handle && this.handle.getName()
   }
-  createMainSession(config: Object, callback: Function): WebxSession {
-    if (!this.mainSession) {
-      this.mainSession = new WebxSession(this, callback)
-      this.mainSession.openMainSession(config)
-      return this.mainSession
+  connect(options) {
+    if (!this.handle && !this.readyState) {
+      this.options = options
+
+      // Update process environement
+      options.cd && process.chdir(options.cd)
+      for (const key in options.envs) {
+        process.env[key] = options.envs[key]
+      }
+
+      // Open engine
+      this.handle = new addon.WebxEngine(
+        options.dll.path,
+        options.dll.entryName,
+        JSON.stringify(options.config),
+        WebxEngine__handleEvent.bind(this)
+      )
     }
-    else {
-      throw new Error("main session already exists")
-    }
+    else throw new Error("WebxEngine.connect invalid")
   }
-  createSession(name: string, config: Object, callback: Function): WebxSession {
-    const session = new WebxSession(this, callback)
-    session.openSession(name, config)
-    return session
-  }
-  addEventListener(callback: Function) {
-    this.listeners.push(callback)
-  }
-  removeEventListener(callback: Function) {
-    this.listeners && this.listeners.splice(this.listeners.indexOf(callback), 1)
-  }
-  handleEvent(type: string, data: any) {
-    switch (type) {
-      case "Runtime.startup":
-        debug.info("[Runtime.startup]", this.name)
-        this.readyState = true
-        this.onReady(this)
-        break
-      case "Runtime.terminate":
-        this.readyState = false
-        debug.info("[Runtime.terminate]", this.name)
-        break
-      default:
-        console.log("[", type, "]", data && JSON.stringify(data))
+  disconnect() {
+    if (this.readyState) {
+      debug.info("WebxEngine.disconnect", this.name)
+      this.readyState = false
+      this.handle.close()
     }
-    for (const cb of this.listeners) {
-      cb(type, data)
-    }
+    else throw new Error("WebxEngine.disconnect invalid")
   }
-  dispatch(req, res, next) {
-    if (!this.mainSession) {
-      this.mainSession.dispatch(req, res, next)
-    }
-    else {
-      NotOnline(req, res, next)
-    }
+  onRuntimeStartup(data: any) {
+    throw new Error("WebxEngine.onRuntimeStartup shall be overriden")
+  }
+  onRuntimeTerminate(data: any) {
+    throw new Error("WebxEngine.onRuntimeStartup shall be overriden")
+  }
+  onStartup(data: any) {
+    throw new Error("WebxEngine.onStartup shall be overriden")
+  }
+  onEvent(type: string, data: any) {
+    throw new Error("WebxEngine.onEvent shall be overriden")
+  }
+  onTerminate(data: any) {
+    throw new Error("WebxEngine.onTerminate shall be overriden")
   }
 }
 
-export function CreateWebxEngine(options: Object, callback: Function): WebxEngine {
-  return new WebxEngine(options, callback)
+function WebxSession__handleEvent(type: string, data: any) {
+  switch (type) {
+    case "Session.startup":
+      debug.info("[Session.startup]", this.name)
+      this.readyState = true
+      return this.onStartup(data)
+    case "Session.terminate":
+      this.readyState = false
+      debug.info("[Session.terminate]", this.name)
+      return this.onTerminate(data)
+    default:
+      console.log("[", type, "]", data && JSON.stringify(data))
+      return this.onEvent(type, data)
+  }
+}
+
+function WebxEngine__handleEvent(type: string, data: any) {
+  switch (type) {
+    case "Runtime.startup":
+      debug.info("[Runtime.startup]", this.name)
+      return this.onRuntimeStartup(data)
+    case "Runtime.terminate":
+      this.readyState = false
+      this.handle = null
+      debug.info("[Runtime.terminate]", this.name)
+      return this.onRuntimeTerminate(data)
+    default:
+      return WebxSession__handleEvent.call(this, type, data)
+  }
 }

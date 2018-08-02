@@ -32,6 +32,13 @@ void WebxEngineJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
   args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
 }
 
+void WebxEngineJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
+{
+  using namespace v8;
+  WebxEngine *engine = Nan::ObjectWrap::Unwrap<WebxEngine>(args.Holder());
+  engine->context->close();
+}
+
 void WebxEngineJS::dispatchEvent(const Nan::FunctionCallbackInfo<v8::Value> &args) {
 
 }
@@ -46,6 +53,7 @@ v8::Local<v8::Function> WebxEngineJS::CreatePrototype()
   // Prototype
   Nan::SetPrototypeMethod(tpl, "getName", WebxEngineJS::getName);
   Nan::SetPrototypeMethod(tpl, "dispatchEvent", WebxEngineJS::dispatchEvent);
+  Nan::SetPrototypeMethod(tpl, "close", WebxEngineJS::close);
 
   constructor.Reset(tpl->GetFunction());
   return tpl->GetFunction();

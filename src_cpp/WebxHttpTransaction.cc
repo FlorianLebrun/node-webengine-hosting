@@ -29,12 +29,12 @@ WebxHttpTransaction::WebxHttpTransaction(
     Local<Value> key = keys->Get(i);
     this->setAttributStringV8(key, headers->Get(key));
   }
-  printf("<WebxHttpTransaction %d>\n", ++leakcount);
+  printf("<WebxHttpTransaction %d>\n", int(++leakcount));
 }
 
 WebxHttpTransaction::~WebxHttpTransaction()
 {
-  printf("<WebxHttpTransaction %d>\n", --leakcount);
+  printf("<WebxHttpTransaction %d>\n", int(--leakcount));
 }
 
 bool WebxHttpTransaction::connect(webx::IStream *stream)

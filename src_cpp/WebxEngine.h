@@ -8,13 +8,12 @@ class WebxEngine;
 class WebxEngineJS;
 class WebxSession;
 
-class WebxEngine : public Nan::ObjectWrap, public webx::Releasable<webx::IEngineHost>
+class WebxEngine : public Nan::ObjectWrap, public webx::NoAttributs<webx::Releasable<webx::IEngineHost>>
 {
 public:
   friend WebxEngineJS;
 
   webx::Ref<webx::IEngineContext> context;
-  webx::Ref<WebxSession> mainSession;
 
   v8h::EventQueue<webx::IEvent> events;
   v8::Persistent<v8::Function> onEvent;
@@ -23,6 +22,8 @@ public:
   ~WebxEngine();
 
   void connect(const char *dllPath, const char *dllEntryPoint, const char *config);
+  virtual void dispatchTransaction(webx::IStream *request) override;
+  virtual void dispatchWebSocket(webx::IStream *stream) override;
   virtual void notify(webx::IEvent* event) override;
   virtual bool disconnect() override { throw "not imp"; }
   virtual void free() override { delete this; }
@@ -42,6 +43,7 @@ public:
 
   static void getName(const Nan::FunctionCallbackInfo<v8::Value> &args);
   static void dispatchEvent(const Nan::FunctionCallbackInfo<v8::Value> &args);
+  static void close(const Nan::FunctionCallbackInfo<v8::Value> &args);
 };
 
 #endif

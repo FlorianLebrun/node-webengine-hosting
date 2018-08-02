@@ -61,6 +61,15 @@ void WebxEngine::connect(const char *dllPath, const char *dllEntryPoint, const c
     Nan::ThrowError(msg);
   }
 }
+void WebxEngine::dispatchTransaction(webx::IStream *request) {
+  printf("!Error: Engine host not support dispatchTransaction\n");
+  request->close();
+}
+
+void WebxEngine::dispatchWebSocket(webx::IStream *stream) {
+  printf("!Error: Engine host not support dispatchWebSocket\n");
+  stream->close();
+}
 
 void WebxEngine::notify(webx::IEvent *event)
 {
