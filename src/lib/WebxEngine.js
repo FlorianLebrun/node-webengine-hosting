@@ -38,7 +38,7 @@ export class WebxSession {
   onTerminate(data: any) {
     throw new Error("WebxEngine.onTerminate shall be overriden")
   }
-  dispatch(req, res) {
+  dispatch(req, res, callback) {
     if (req.upgrade) {
       const stream = new addon.WebxWebSocketStream(this.handle, req, (data) => {
         const ws = res.accept()
@@ -60,6 +60,7 @@ export class WebxSession {
         })
 
         stream.on("close", (data) => {
+          callback && callback()
           ws.close()
           console.log("WebSocket closed by server")
         })
@@ -79,6 +80,7 @@ export class WebxSession {
         },
         function handleEnd() {
           res.end()
+          callback && callback()
         }
       )
       req.on("data", function handleChunk(bufferIn) {

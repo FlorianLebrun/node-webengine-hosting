@@ -37,6 +37,9 @@ namespace webx
     ~Ref() {
       if (this->_object) this->_object->release();
     }
+    void New(CReleasable* object) {
+      this->_object = object;
+    }
     CReleasable* operator = (CReleasable* object) {
       if (this->_object) this->_object->release();
       if (object) object->retain();
