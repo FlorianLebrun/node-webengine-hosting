@@ -27,8 +27,10 @@ void WebxSessionJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
   WebxSession *session = Nan::ObjectWrap::Unwrap<WebxSession>(args.Holder());
-  const char *name = session->context->getName();
-  args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
+  if(session->context) {
+    const char *name = session->context->getName();
+    args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
+  }
 }
 
 void WebxSessionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)

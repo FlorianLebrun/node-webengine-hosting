@@ -2,13 +2,11 @@ import { debug } from "@common"
 const addon = require("bindings")("addon")
 
 export class WebxSession {
+  name: string
   readyState: boolean = false
   handle: addon.WebxSession = null
   engine: WebxEngine
 
-  get name() {
-    return this.handle && this.handle.getName()
-  }
   connect(name: string, options: Object, engine: WebxEngine) {
     if (!this.handle && !this.readyState) {
       this.engine = engine
@@ -23,20 +21,19 @@ export class WebxSession {
   }
   disconnect() {
     if (this.readyState) {
-      debug.info("WebxSession.disconnect", this.name)
       this.readyState = false
       this.handle.close()
     }
     else throw new Error("WebxSession.disconnect invalid")
   }
   onStartup(data: any) {
-    throw new Error("WebxEngine.onStartup shall be overriden")
+    debug.info(`[${this.name}] Session.startup`)
   }
   onEvent(type: string, data: any) {
-    throw new Error("WebxEngine.onEvent shall be overriden")
+    debug.title(`[${this.name}] ${type} ${(data && JSON.stringify(data)) || ""}`)
   }
   onTerminate(data: any) {
-    throw new Error("WebxEngine.onTerminate shall be overriden")
+    debug.info(`[${this.name}] Session.exit`)
   }
   dispatch(req, res, callback) {
     if (req.upgrade) {
@@ -94,12 +91,10 @@ export class WebxSession {
 }
 
 export class WebxEngine {
+  name: string
   readyState: boolean = false
   handle: addon.WebxEngine = null
 
-  get name() {
-    return this.handle && this.handle.getName()
-  }
   connect(options) {
     if (!this.handle && !this.readyState) {
       this.options = options
@@ -117,46 +112,48 @@ export class WebxEngine {
         JSON.stringify(options.config),
         WebxEngine__handleEvent.bind(this)
       )
+
+      // Close engine on exit
+      process.on('beforeExit', (code) => {
+        this.handle && this.handle.disconnect();
+      })
     }
     else throw new Error("WebxEngine.connect invalid")
   }
   disconnect() {
     if (this.readyState) {
-      debug.info("WebxEngine.disconnect", this.name)
       this.readyState = false
       this.handle.close()
     }
     else throw new Error("WebxEngine.disconnect invalid")
   }
   onRuntimeStartup(data: any) {
-    throw new Error("WebxEngine.onRuntimeStartup shall be overriden")
+    debug.warning(`[Runtime.startup]`)
   }
   onRuntimeTerminate(data: any) {
-    throw new Error("WebxEngine.onRuntimeStartup shall be overriden")
+    debug.warning(`[Runtime.exit]`)
   }
   onStartup(data: any) {
-    throw new Error("WebxEngine.onStartup shall be overriden")
+    debug.info(`[${this.name}] Session.startup`)
   }
   onEvent(type: string, data: any) {
-    throw new Error("WebxEngine.onEvent shall be overriden")
+    debug.title(`[${this.name}] ${type} ${(data && JSON.stringify(data)) || ""}`)
   }
   onTerminate(data: any) {
-    throw new Error("WebxEngine.onTerminate shall be overriden")
+    debug.info(`[${this.name}] Session.exit`)
   }
 }
 
 function WebxSession__handleEvent(type: string, data: any) {
   switch (type) {
     case "Session.startup":
-      debug.info("[Session.startup]", this.name)
       this.readyState = true
+      this.name = this.handle.getName()
       return this.onStartup(data)
-    case "Session.terminate":
+    case "Session.exit":
       this.readyState = false
-      debug.info("[Session.terminate]", this.name)
       return this.onTerminate(data)
     default:
-      console.log("[", type, "]", data && JSON.stringify(data))
       return this.onEvent(type, data)
   }
 }
@@ -164,12 +161,10 @@ function WebxSession__handleEvent(type: string, data: any) {
 function WebxEngine__handleEvent(type: string, data: any) {
   switch (type) {
     case "Runtime.startup":
-      debug.info("[Runtime.startup]", this.name)
       return this.onRuntimeStartup(data)
-    case "Runtime.terminate":
+    case "Runtime.exit":
       this.readyState = false
       this.handle = null
-      debug.info("[Runtime.terminate]", this.name)
       return this.onRuntimeTerminate(data)
     default:
       return WebxSession__handleEvent.call(this, type, data)

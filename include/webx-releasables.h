@@ -81,9 +81,9 @@ namespace webx
     {
 #ifdef _DEBUG
       _s_object_count++;
-      printf("(+) object %d\n", (int)_s_object_count);
+      //printf("(+) %s %d\n", typeid(CReleasable).name(), (int)_s_object_count);
       if (_s_object_count > 20) {
-        printf("leak! %d\n", (int)_s_object_count);
+        printf("(!) leak %s %d\n", typeid(CReleasable).name(), (int)_s_object_count);
       }
 #endif
     }
@@ -96,9 +96,9 @@ namespace webx
       if ((--this->nref) <= 0) {
 #ifdef _DEBUG
         _s_object_count--;
-        printf("(-) object %d\n", (int)_s_object_count);
+        //printf("(-) %s %d\n", typeid(CReleasable).name(), (int)_s_object_count);
         if (this->nref < 0) {
-          printf("(!) crash risk\n");
+          printf("(!) crash risk on %s\n", typeid(CReleasable).name());
         }
 #endif
         this->free();
