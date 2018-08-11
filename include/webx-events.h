@@ -96,7 +96,7 @@ namespace webx
 
   inline IData *IData::New(const char* buffer, int size)
   {
-    class Data : public NoAttributs<Releasable<IData>>
+    class Data : public StringMapBasedAttributs<Releasable<IData>>
     {
     public:
       uint32_t size;

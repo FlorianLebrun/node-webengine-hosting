@@ -10,14 +10,14 @@ void WebxHttpTransactionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  WebxSession *session = Nan::ObjectWrap::Unwrap<WebxSession>(args[0]->ToObject());
+  WebxSessionObjectWrap *session = WebxSessionObjectWrap::Unwrap<WebxSessionObjectWrap>(args[0]->ToObject());
   Local<Object> req = args[1]->ToObject();
   Local<Function> onSend = args[2].As<v8::Function>();
   Local<Function> onChunk = args[3].As<v8::Function>();
   Local<Function> onEnd = args[4].As<v8::Function>();
 
   WebxHttpTransaction *transaction = new WebxHttpTransaction(req, onSend, onChunk, onEnd);
-  transaction->Wrap(args.This());
+  transaction->AttachObject(args.This());
 
   session->context->dispatchTransaction(transaction);
 
@@ -27,7 +27,7 @@ void WebxHttpTransactionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args
 void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxHttpTransaction *transaction = Nan::ObjectWrap::Unwrap<WebxHttpTransaction>(args.Holder());
+  WebxHttpTransaction *transaction = WebxHttpTransaction::Unwrap<WebxHttpTransaction>(args.Holder());
   if (args.Length() != 1)
     Nan::ThrowTypeError("Wrong arguments");
 
@@ -47,7 +47,7 @@ void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
 void WebxHttpTransactionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxHttpTransaction *transaction = Nan::ObjectWrap::Unwrap<WebxHttpTransaction>(args.Holder());
+  WebxHttpTransaction *transaction = WebxHttpTransaction::Unwrap<WebxHttpTransaction>(args.Holder());
   if (transaction->input) {
     transaction->input->close();
     transaction->input = 0;

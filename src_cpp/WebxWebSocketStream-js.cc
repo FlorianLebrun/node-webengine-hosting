@@ -10,13 +10,13 @@ void WebxWebSocketStreamJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  WebxSession *session = Nan::ObjectWrap::Unwrap<WebxSession>(args[0]->ToObject());
+  WebxSession *session = WebxSession::Unwrap<WebxSession>(args[0]->ToObject());
   Local<Object> req = args[1]->ToObject();
   Local<Function> onAccept = args[2].As<v8::Function>();
   Local<Function> onReject = args[3].As<v8::Function>();
 
   WebxWebSocketStream *wsocket = new WebxWebSocketStream(req, onAccept, onReject);
-  wsocket->Wrap(args.This());
+  wsocket->AttachObject(args.This());
 
   session->context->dispatchWebSocket(wsocket);
 
@@ -29,7 +29,7 @@ void WebxWebSocketStreamJS::on(const Nan::FunctionCallbackInfo<v8::Value> &args)
   if (args.Length() != 2 || !args[0]->IsString() || !args[1]->IsFunction())
     Nan::ThrowTypeError("Wrong arguments");
 
-  WebxWebSocketStream *stream = Nan::ObjectWrap::Unwrap<WebxWebSocketStream>(args.Holder());
+  WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder());
   std::string event = v8h::GetUtf8(args[0]->ToString());
   Local<Function> callback = args[1].As<v8::Function>();
   if (event == "message")
@@ -49,7 +49,7 @@ void WebxWebSocketStreamJS::on(const Nan::FunctionCallbackInfo<v8::Value> &args)
 void WebxWebSocketStreamJS::write(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxWebSocketStream *stream = Nan::ObjectWrap::Unwrap<WebxWebSocketStream>(args.Holder());
+  WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder());
   if (args.Length() != 1)
     Nan::ThrowTypeError("Wrong arguments");
 
@@ -62,7 +62,7 @@ void WebxWebSocketStreamJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
 void WebxWebSocketStreamJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxWebSocketStream *stream = Nan::ObjectWrap::Unwrap<WebxWebSocketStream>(args.Holder());
+  WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder());
   if (stream->opposite)
     stream->opposite->close();
 }
@@ -70,7 +70,7 @@ void WebxWebSocketStreamJS::close(const Nan::FunctionCallbackInfo<v8::Value> &ar
 void WebxWebSocketStreamJS::abort(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxWebSocketStream *stream = Nan::ObjectWrap::Unwrap<WebxWebSocketStream>(args.Holder());
+  WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder());
   stream->abort();
 }
 

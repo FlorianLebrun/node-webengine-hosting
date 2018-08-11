@@ -5,6 +5,7 @@
       "sources": [
         "src_cpp/addon.cc",
         "src_cpp/spinlock.cpp",
+        "src_cpp/WebxSessionObjectWrap.cc",
         "src_cpp/WebxEngine.cc",
         "src_cpp/WebxEngine-js.cc",
         "src_cpp/WebxHttpTransaction.cc",

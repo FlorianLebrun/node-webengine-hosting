@@ -2,65 +2,6 @@
 
 static std::atomic<intptr_t> leakcount = 0;
 
-WebxHttpTransaction::WebxHttpTransaction(
-  v8::Local<v8::Object> req,
-  v8::Local<v8::Function> onSend,
-  v8::Local<v8::Function> onChunk,
-  v8::Local<v8::Function> onEnd)
-  : output(this, this->completeEvents_sync)
-{
-  using namespace v8;
-  this->onSend.Reset(Isolate::GetCurrent(), onSend);
-  this->onChunk.Reset(Isolate::GetCurrent(), onChunk);
-  this->onEnd.Reset(Isolate::GetCurrent(), onEnd);
-
-  // Set request pseudo headers
-  this->setAttributStringV8(":method", v8h::GetIn(req, "method"));
-  this->setAttributStringV8(":path", v8h::GetIn(req, "url"));
-  this->setAttributStringV8(":scheme", v8h::GetIn(req, "protocole"));
-  this->setAttributStringV8(":authority", v8h::GetIn(req, "hostname"));
-  this->setAttributStringV8(":original-path", v8h::GetIn(req, "originalUrl"));
-
-  // Set request headers
-  Local<Object> headers = v8h::GetIn(req, "headers")->ToObject();
-  Local<Array> keys = headers->GetOwnPropertyNames(Isolate::GetCurrent()->GetCurrentContext()).ToLocalChecked();
-  for (uint32_t i = 0; i < keys->Length(); i++)
-  {
-    Local<Value> key = keys->Get(i);
-    this->setAttributStringV8(key, headers->Get(key));
-  }
-  printf("<WebxHttpTransaction %d>\n", int(++leakcount));
-}
-
-WebxHttpTransaction::~WebxHttpTransaction()
-{
-  printf("<WebxHttpTransaction %d>\n", int(--leakcount));
-}
-
-bool WebxHttpTransaction::connect(webx::IStream *stream)
-{
-  this->input = stream;
-  return true;
-}
-
-bool WebxHttpTransaction::write(webx::IData *data)
-{
-  this->output.push_idle(data);
-  return true;
-}
-
-void WebxHttpTransaction::close()
-{
-  this->output.complete();
-}
-
-void WebxHttpTransaction::free()
-{
-  _ASSERT(!this->output.flush());
-  delete this;
-}
-
-
 struct ResponseData : public webx::StringAttributsVisitor<webx::IAttributsVisitor>
 {
   int statusCode;
@@ -91,6 +32,58 @@ struct ResponseData : public webx::StringAttributsVisitor<webx::IAttributsVisito
   }
 };
 
+WebxHttpTransaction::WebxHttpTransaction(
+  v8::Local<v8::Object> req,
+  v8::Local<v8::Function> onSend,
+  v8::Local<v8::Function> onChunk,
+  v8::Local<v8::Function> onEnd)
+  : output(this, this->completeEvents_sync)
+{
+  using namespace v8;
+  this->onSend.Reset(Isolate::GetCurrent(), onSend);
+  this->onChunk.Reset(Isolate::GetCurrent(), onChunk);
+  this->onEnd.Reset(Isolate::GetCurrent(), onEnd);
+
+  // Set request pseudo headers
+  this->setAttributStringV8(":method", v8h::GetIn(req, "method"));
+  this->setAttributStringV8(":path", v8h::GetIn(req, "url"));
+  this->setAttributStringV8(":scheme", v8h::GetIn(req, "protocole"));
+  this->setAttributStringV8(":authority", v8h::GetIn(req, "hostname"));
+  this->setAttributStringV8(":original-path", v8h::GetIn(req, "originalUrl"));
+
+  // Set request headers
+  Local<Object> headers = v8h::GetIn(req, "headers")->ToObject();
+  Local<Array> keys = headers->GetOwnPropertyNames(Isolate::GetCurrent()->GetCurrentContext()).ToLocalChecked();
+  for (uint32_t i = 0; i < keys->Length(); i++)
+  {
+    Local<Value> key = keys->Get(i);
+    this->setAttributStringV8(key, headers->Get(key));
+  }
+  TRACE_LEAK(printf("<WebxHttpTransaction %d>\n", int(++leakcount)));
+}
+
+WebxHttpTransaction::~WebxHttpTransaction()
+{
+  TRACE_LEAK(printf("<WebxHttpTransaction %d>\n", int(--leakcount)));
+}
+
+bool WebxHttpTransaction::connect(webx::IStream *stream)
+{
+  this->input = stream;
+  return true;
+}
+
+bool WebxHttpTransaction::write(webx::IData *data)
+{
+  this->output.push_idle(data);
+  return true;
+}
+
+void WebxHttpTransaction::close()
+{
+  this->output.complete();
+}
+
 void WebxHttpTransaction::completeEvents() {
   using namespace v8;
   Isolate *isolate = Isolate::GetCurrent();
@@ -116,5 +109,13 @@ void WebxHttpTransaction::completeEvents() {
   if (this->output.is_completed()) {
     Local<Function> onEnd = Local<Function>::New(isolate, this->onEnd);
     onEnd->Call(isolate->GetCurrentContext()->Global(), 0, 0);
+    this->DettachObject();
+    this->release();
   }
+}
+
+void WebxHttpTransaction::free()
+{
+  _ASSERT(!this->output.flush());
+  delete this;
 }

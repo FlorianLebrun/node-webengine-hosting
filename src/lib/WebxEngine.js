@@ -1,24 +1,11 @@
 import { debug } from "@common"
 const addon = require("bindings")("addon")
 
-export class WebxSession {
+export class WebxSessionBase {
   name: string
   readyState: boolean = false
   handle: addon.WebxSession = null
-  engine: WebxEngine
 
-  connect(name: string, options: Object, engine: WebxEngine) {
-    if (!this.handle && !this.readyState) {
-      this.engine = engine
-      this.handle = new addon.WebxSession(
-        engine.handle,
-        name,
-        JSON.stringify(options),
-        WebxSession__handleEvent.bind(this)
-      )
-    }
-    else throw new Error("WebxSession.connect invalid")
-  }
   disconnect() {
     if (this.readyState) {
       this.readyState = false
@@ -90,10 +77,24 @@ export class WebxSession {
   }
 }
 
-export class WebxEngine {
-  name: string
-  readyState: boolean = false
-  handle: addon.WebxEngine = null
+export class WebxSession extends WebxSessionBase {
+  engine: WebxEngine
+
+  connect(name: string, options: Object, engine: WebxEngine) {
+    if (!this.handle && !this.readyState) {
+      this.engine = engine
+      this.handle = new addon.WebxSession(
+        engine.handle,
+        name,
+        JSON.stringify(options),
+        WebxSession__handleEvent.bind(this)
+      )
+    }
+    else throw new Error("WebxSession.connect invalid")
+  }
+}
+
+export class WebxEngine extends WebxSessionBase {
 
   connect(options) {
     if (!this.handle && !this.readyState) {
@@ -120,27 +121,11 @@ export class WebxEngine {
     }
     else throw new Error("WebxEngine.connect invalid")
   }
-  disconnect() {
-    if (this.readyState) {
-      this.readyState = false
-      this.handle.close()
-    }
-    else throw new Error("WebxEngine.disconnect invalid")
-  }
   onRuntimeStartup(data: any) {
     debug.warning(`[Runtime.startup]`)
   }
   onRuntimeTerminate(data: any) {
     debug.warning(`[Runtime.exit]`)
-  }
-  onStartup(data: any) {
-    debug.info(`[${this.name}] Session.startup`)
-  }
-  onEvent(type: string, data: any) {
-    debug.title(`[${this.name}] ${type} ${(data && JSON.stringify(data)) || ""}`)
-  }
-  onTerminate(data: any) {
-    debug.info(`[${this.name}] Session.exit`)
   }
 }
 

@@ -12,13 +12,13 @@ void WebxSessionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  WebxEngine *engine = Nan::ObjectWrap::Unwrap<WebxEngine>(args[0]->ToObject());
+  WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args[0]->ToObject());
   Local<String> name = args[1].As<v8::String>();
   Local<String> config = args[2].As<v8::String>();
 
   WebxSession *session = new WebxSession(args[3].As<v8::Function>());
-  session->context = engine->context->createSession(session, *Utf8Value(name), *Utf8Value(config));
-  session->Wrap(args.This());
+  session->context = engine->instance->createSession(session, *Utf8Value(name), *Utf8Value(config));
+  session->AttachObject(args.This());
 
   args.GetReturnValue().Set(args.This());
 }
@@ -26,7 +26,7 @@ void WebxSessionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
 void WebxSessionJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxSession *session = Nan::ObjectWrap::Unwrap<WebxSession>(args.Holder());
+  WebxSession *session = WebxSession::Unwrap<WebxSession>(args.Holder());
   if(session->context) {
     const char *name = session->context->getName();
     args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
@@ -36,7 +36,7 @@ void WebxSessionJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
 void WebxSessionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxSession *session = Nan::ObjectWrap::Unwrap<WebxSession>(args.Holder());
+  WebxSession *session = WebxSession::Unwrap<WebxSession>(args.Holder());
   session->context->close();
 }
 

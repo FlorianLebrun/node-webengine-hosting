@@ -65,7 +65,7 @@ void WebxWebSocketStream::close()
 }
 
 void WebxWebSocketStream::free() {
-  printf("WebxWebSocketStream leak !\n");
+  delete this;
 }
 
 void WebxWebSocketStream::completeEvents()
@@ -96,7 +96,7 @@ void WebxWebSocketStream::completeEvents()
     {
     case Accepted:
     {
-      Local<Value> argv[] = {this->persistent().Get(isolate)};
+      Local<Value> argv[] = {this->handle.Get(isolate)};
       Local<Function> onAccept = Local<Function>::New(isolate, this->onAccept);
       onAccept->Call(isolate->GetCurrentContext()->Global(), 1, argv);
     }

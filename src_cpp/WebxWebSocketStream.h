@@ -7,7 +7,7 @@
 class WebxWebSocketStream;
 class WebxWebSocketStreamJS;
 
-class WebxWebSocketStream : public Nan::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::IStream>>
+class WebxWebSocketStream : public v8h::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::IStream>>
 {
 public:
   friend WebxWebSocketStreamJS;

@@ -1,12 +1,12 @@
 #include "./WebxSession.h"
 
+static std::atomic<intptr_t> leakcount = 0;
+
 WebxSession::WebxSession(v8::Local<v8::Function> onEvent)
-  : events(this, this->completeEvents_sync)
+  : WebxSessionObjectWrap(onEvent)
 {
-  using namespace v8;
-  this->context = 0;
   this->engine = 0;
-  this->onEvent.Reset(Isolate::GetCurrent(), onEvent);
+  TRACE_LEAK(printf("<WebxSession %d>\n", int(++leakcount)));
 }
 
 WebxSession::~WebxSession()
@@ -16,6 +16,7 @@ WebxSession::~WebxSession()
     this->context->close();
     this->context = 0;
   }
+  TRACE_LEAK(printf("<WebxSession %d>\n", int(--leakcount)));
 }
 
 void WebxSession::completeEvents()
@@ -33,6 +34,10 @@ void WebxSession::completeEvents()
       Local<Value> argv[] = { Nan::New(ev->eventName()).ToLocalChecked(), object.data };
       onEvent->Call(isolate->GetCurrentContext()->Global(), 2, argv);
     }
+  }
+  if (this->events.is_completed()) {
+    this->DettachObject();
+    this->release();
   }
 }
 
@@ -54,9 +59,10 @@ void WebxSession::notify(webx::IEvent *event)
 bool WebxSession::disconnect()
 {
   this->context = 0;
+  this->events.complete();
   return true;
 }
 
 void WebxSession::free() {
-  printf("WebxSession leak !\n");
+  delete this;
 }

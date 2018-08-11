@@ -7,7 +7,7 @@
 class WebxHttpTransaction;
 class WebxHttpTransactionJS;
 
-class WebxHttpTransaction : public Nan::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::IStream>>
+class WebxHttpTransaction : public v8h::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::IStream>>
 {
 public:
   friend WebxHttpTransactionJS;

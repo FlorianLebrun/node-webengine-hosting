@@ -18,7 +18,7 @@ void WebxEngineJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
   Local<String> config = args[2]->ToString();
 
   WebxEngine *engine = new WebxEngine(args[3].As<v8::Function>());
-  engine->Wrap(args.This());
+  engine->AttachObject(args.This());
   engine->connect(*Utf8Value(dllPath), *Utf8Value(dllEntry), *Utf8Value(config));
 
   args.GetReturnValue().Set(args.This());
@@ -27,7 +27,7 @@ void WebxEngineJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
 void WebxEngineJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxEngine *engine = Nan::ObjectWrap::Unwrap<WebxEngine>(args.Holder());
+  WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args.Holder());
   const char *name = engine->context->getName();
   args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
 }
@@ -35,7 +35,7 @@ void WebxEngineJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
 void WebxEngineJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxEngine *engine = Nan::ObjectWrap::Unwrap<WebxEngine>(args.Holder());
+  WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args.Holder());
   engine->context->close();
 }
 

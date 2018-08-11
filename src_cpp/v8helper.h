@@ -9,8 +9,38 @@
 #include "../include/webx.h"
 #include "./spinlock.h"
 
+#define TRACE_LEAK(x) //x
+
 namespace v8h
 {
+  class ObjectWrap {
+  public:
+    v8::Persistent<v8::Object> handle;
+
+    inline void AttachObject(v8::Local<v8::Object> object) {
+      assert(this->handle.IsEmpty());
+      assert(object->InternalFieldCount() > 0);
+      Nan::SetInternalFieldPointer(object, 0, this);
+      this->handle.Reset(v8::Isolate::GetCurrent(), object);
+    }
+    inline void DettachObject() {
+      assert(!this->handle.IsEmpty());
+      Nan::SetInternalFieldPointer(this->toObject(), 0, 0);
+      this->handle.Reset();
+    }
+    inline v8::Local<v8::Object> toObject() const {
+      return Nan::New(this->handle);
+    }
+    template <class T>
+    static inline T* Unwrap(v8::Local<v8::Object> object) {
+      assert(!object.IsEmpty());
+      assert(object->InternalFieldCount() > 0);
+      void* ptr = Nan::GetInternalFieldPointer(object, 0);
+      ObjectWrap* wrap = static_cast<ObjectWrap*>(ptr);
+      return static_cast<T*>(wrap);
+    }
+  };
+
   inline v8::Local<v8::String> MakeString(const char *value, int length = -1)
   {
     return v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), value, v8::String::kNormalString, length);

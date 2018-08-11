@@ -1,11 +1,9 @@
 #include "./WebxEngine.h"
-#include "./WebxSession.h"
 
 WebxEngine::WebxEngine(v8::Local<v8::Function> onEvent)
-  : events(this, this->completeEvents_sync)
+  : WebxSessionObjectWrap(onEvent)
 {
-  using namespace v8;
-  this->onEvent.Reset(Isolate::GetCurrent(), onEvent);
+  this->instance = 0;
 }
 
 WebxEngine::~WebxEngine()
@@ -33,6 +31,10 @@ void WebxEngine::completeEvents()
       onEvent->Call(isolate->GetCurrentContext()->Global(), 2, argv);
     }
   }
+  if (this->events.is_completed()) {
+    this->DettachObject();
+    this->release();
+  }
 }
 
 void WebxEngine::connect(const char *dllPath, const char *dllEntryPoint, const char *config)
@@ -45,7 +47,8 @@ void WebxEngine::connect(const char *dllPath, const char *dllEntryPoint, const c
     webx::tEngineConnectProc entryPoint = webx::tEngineConnectProc(GetProcAddress(hModule, dllEntryPoint));
     if (entryPoint)
     {
-      this->context = entryPoint(this, config);
+      this->instance = entryPoint(this, config);
+      this->context = this->instance;
     }
     else
     {
@@ -61,6 +64,7 @@ void WebxEngine::connect(const char *dllPath, const char *dllEntryPoint, const c
     Nan::ThrowError(msg);
   }
 }
+
 void WebxEngine::dispatchTransaction(webx::IStream *request) {
   printf("!Error: Engine host not support dispatchTransaction\n");
   request->close();
@@ -74,4 +78,15 @@ void WebxEngine::dispatchWebSocket(webx::IStream *stream) {
 void WebxEngine::notify(webx::IEvent *event)
 {
   this->events.push(event);
+}
+void WebxEngine::free() {
+  delete this;
+}
+
+
+bool WebxEngine::disconnect()
+{
+  this->context = 0;
+  this->events.complete();
+  return true;
 }
