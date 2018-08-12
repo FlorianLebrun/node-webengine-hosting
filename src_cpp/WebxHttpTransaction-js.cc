@@ -10,47 +10,59 @@ void WebxHttpTransactionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  WebxSessionObjectWrap *session = WebxSessionObjectWrap::Unwrap<WebxSessionObjectWrap>(args[0]->ToObject());
-  Local<Object> req = args[1]->ToObject();
-  Local<Function> onSend = args[2].As<v8::Function>();
-  Local<Function> onChunk = args[3].As<v8::Function>();
-  Local<Function> onEnd = args[4].As<v8::Function>();
+  if (WebxSessionObjectWrap *session = WebxSessionObjectWrap::Unwrap<WebxSessionObjectWrap>(args[0]->ToObject())) {
+    Local<Object> req = args[1]->ToObject();
+    Local<Function> onSend = args[2].As<v8::Function>();
+    Local<Function> onChunk = args[3].As<v8::Function>();
+    Local<Function> onEnd = args[4].As<v8::Function>();
 
-  WebxHttpTransaction *transaction = new WebxHttpTransaction(req, onSend, onChunk, onEnd);
-  transaction->AttachObject(args.This());
+    WebxHttpTransaction *transaction = new WebxHttpTransaction(req, onSend, onChunk, onEnd);
+    transaction->AttachObject(args.This());
 
-  session->context->dispatchTransaction(transaction);
+    session->context->dispatchTransaction(transaction);
 
-  args.GetReturnValue().Set(args.This());
+    args.GetReturnValue().Set(args.This());
+  }
+  else {
+    Nan::ThrowError("Cannot create a transaction on a closed session");
+  }
 }
 
 void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxHttpTransaction *transaction = WebxHttpTransaction::Unwrap<WebxHttpTransaction>(args.Holder());
-  if (args.Length() != 1)
-    Nan::ThrowTypeError("Wrong arguments");
+  if (WebxHttpTransaction *transaction = WebxHttpTransaction::Unwrap<WebxHttpTransaction>(args.Holder())) {
+    if (args.Length() != 1)
+      Nan::ThrowTypeError("Wrong arguments");
 
-  if (webx::IData *data = v8h::NewDataFromValue(args[0]))
-  {
-    if (transaction->input)
+    if (webx::IData *data = v8h::NewDataFromValue(args[0]))
     {
-      transaction->input->write(data);
+      if (transaction->input)
+      {
+        transaction->input->write(data);
+      }
+      else printf(">>> Lost chunk\n");
+      data->release();
     }
-    else printf(">>> Lost chunk\n");
-    data->release();
+    else
+      Nan::ThrowError("Cannot write this type of chunk");
   }
-  else
-    Nan::ThrowError("Cannot write this type of chunk");
+  else {
+    Nan::ThrowError("Cannot write on a closed http transaction");
+  }
 }
 
 void WebxHttpTransactionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxHttpTransaction *transaction = WebxHttpTransaction::Unwrap<WebxHttpTransaction>(args.Holder());
-  if (transaction->input) {
-    transaction->input->close();
-    transaction->input = 0;
+  if (WebxHttpTransaction *transaction = WebxHttpTransaction::Unwrap<WebxHttpTransaction>(args.Holder())) {
+    if (transaction->input) {
+      transaction->input->close();
+      transaction->input = 0;
+    }
+  }
+  else {
+    Nan::ThrowError("Cannot close on a closed http transaction");
   }
 }
 

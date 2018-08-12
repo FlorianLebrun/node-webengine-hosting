@@ -10,6 +10,7 @@ public:
   v8::Persistent<v8::Function> onEvent;
 
   WebxSessionObjectWrap(v8::Local<v8::Function> onEvent);
+  ~WebxSessionObjectWrap();
 
   virtual void completeEvents() = 0;
 

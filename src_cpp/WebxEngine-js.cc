@@ -27,20 +27,28 @@ void WebxEngineJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
 void WebxEngineJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args.Holder());
-  const char *name = engine->context->getName();
-  args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
+  if (WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args.Holder())) {
+    const char *name = engine->context->getName();
+    args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
+  }
+  else {
+    Nan::ThrowError("Cannot get a engine name on a closed engine");
+  }
+}
+
+void WebxEngineJS::dispatchEvent(const Nan::FunctionCallbackInfo<v8::Value> &args) {
+  Nan::ThrowError("WebxEngineJS::dispatchEvent not implemented");
 }
 
 void WebxEngineJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args.Holder());
-  engine->context->close();
-}
-
-void WebxEngineJS::dispatchEvent(const Nan::FunctionCallbackInfo<v8::Value> &args) {
-
+  if (WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args.Holder())) {
+    engine->context->close();
+  }
+  else {
+    Nan::ThrowError("Cannot close on a closed engine");
+  }
 }
 
 v8::Local<v8::Function> WebxEngineJS::CreatePrototype()

@@ -10,17 +10,21 @@ void WebxWebSocketStreamJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  WebxSession *session = WebxSession::Unwrap<WebxSession>(args[0]->ToObject());
-  Local<Object> req = args[1]->ToObject();
-  Local<Function> onAccept = args[2].As<v8::Function>();
-  Local<Function> onReject = args[3].As<v8::Function>();
+  if (WebxSessionObjectWrap *session = WebxSessionObjectWrap::Unwrap<WebxSessionObjectWrap>(args[0]->ToObject())) {
+    Local<Object> req = args[1]->ToObject();
+    Local<Function> onAccept = args[2].As<v8::Function>();
+    Local<Function> onReject = args[3].As<v8::Function>();
 
-  WebxWebSocketStream *wsocket = new WebxWebSocketStream(req, onAccept, onReject);
-  wsocket->AttachObject(args.This());
+    WebxWebSocketStream *wsocket = new WebxWebSocketStream(req, onAccept, onReject);
+    wsocket->AttachObject(args.This());
 
-  session->context->dispatchWebSocket(wsocket);
+    session->context->dispatchWebSocket(wsocket);
 
-  args.GetReturnValue().Set(args.This());
+    args.GetReturnValue().Set(args.This());
+  }
+  else {
+    Nan::ThrowError("Cannot create a websocket on a closed session");
+  }
 }
 
 void WebxWebSocketStreamJS::on(const Nan::FunctionCallbackInfo<v8::Value> &args)
@@ -29,49 +33,66 @@ void WebxWebSocketStreamJS::on(const Nan::FunctionCallbackInfo<v8::Value> &args)
   if (args.Length() != 2 || !args[0]->IsString() || !args[1]->IsFunction())
     Nan::ThrowTypeError("Wrong arguments");
 
-  WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder());
-  std::string event = v8h::GetUtf8(args[0]->ToString());
-  Local<Function> callback = args[1].As<v8::Function>();
-  if (event == "message")
-  {
-    stream->onMessage.Reset(Isolate::GetCurrent(), callback);
+  if (WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder())) {
+    std::string event = v8h::GetUtf8(args[0]->ToString());
+    Local<Function> callback = args[1].As<v8::Function>();
+    if (event == "message")
+    {
+      stream->onMessage.Reset(Isolate::GetCurrent(), callback);
+    }
+    else if (event == "close")
+    {
+      stream->onClose.Reset(Isolate::GetCurrent(), callback);
+    }
+    else
+    {
+      Nan::ThrowError("Invalid event");
+    }
   }
-  else if (event == "close")
-  {
-    stream->onClose.Reset(Isolate::GetCurrent(), callback);
-  }
-  else
-  {
-    Nan::ThrowError("Invalid event");
+  else {
+    Nan::ThrowError("Cannot bind event on a closed websocket");
   }
 }
 
 void WebxWebSocketStreamJS::write(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder());
   if (args.Length() != 1)
     Nan::ThrowTypeError("Wrong arguments");
 
-  if (webx::IData *data = v8h::NewDataFromValue(args[0]))
-  {
-    stream->read(data);
+  if (WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder())) {
+    if (webx::IData *data = v8h::NewDataFromValue(args[0])) {
+      stream->read(data);
+    }
+  }
+  else {
+    Nan::ThrowError("Cannot write on a closed websocket");
   }
 }
 
 void WebxWebSocketStreamJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder());
-  if (stream->opposite)
-    stream->opposite->close();
+  if (WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder())) {
+    if (stream->opposite) {
+      stream->opposite->close();
+      stream->opposite = 0;
+    }
+  }
+  else {
+    Nan::ThrowError("Cannot close on a closed websocket");
+  }
 }
 
 void WebxWebSocketStreamJS::abort(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder());
-  stream->abort();
+  if (WebxWebSocketStream *stream = WebxWebSocketStream::Unwrap<WebxWebSocketStream>(args.Holder())) {
+    stream->abort();
+  }
+  else {
+    Nan::ThrowError("Cannot abort on a closed websocket");
+  }
 }
 
 v8::Local<v8::Function> WebxWebSocketStreamJS::CreatePrototype()

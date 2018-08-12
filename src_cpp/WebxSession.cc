@@ -1,6 +1,6 @@
 #include "./WebxSession.h"
 
-static std::atomic<intptr_t> leakcount = 0;
+TRACE_LEAK(static std::atomic<intptr_t> leakcount = 0);
 
 WebxSession::WebxSession(v8::Local<v8::Function> onEvent)
   : WebxSessionObjectWrap(onEvent)
@@ -11,22 +11,17 @@ WebxSession::WebxSession(v8::Local<v8::Function> onEvent)
 
 WebxSession::~WebxSession()
 {
-  if (this->context)
-  {
-    this->context->close();
-    this->context = 0;
-  }
   TRACE_LEAK(printf("<WebxSession %d>\n", int(--leakcount)));
 }
 
 void WebxSession::completeEvents()
 {
   using namespace v8;
+  Isolate *isolate = Isolate::GetCurrent();
+  HandleScope scope(isolate);
+
   if (webx::Ref<webx::IEvent> events = this->events.flush())
   {
-    Isolate *isolate = Isolate::GetCurrent();
-    HandleScope scope(isolate);
-
     Local<Function> onEvent = Local<Function>::New(isolate, this->onEvent);
     for (webx::IEvent *ev = events; ev; ev = ev->next)
     {

@@ -1,6 +1,6 @@
 #include "./WebxHttpTransaction.h"
 
-static std::atomic<intptr_t> leakcount = 0;
+TRACE_LEAK(static std::atomic<intptr_t> leakcount = 0);
 
 struct ResponseData : public webx::StringAttributsVisitor<webx::IAttributsVisitor>
 {
@@ -64,6 +64,14 @@ WebxHttpTransaction::WebxHttpTransaction(
 
 WebxHttpTransaction::~WebxHttpTransaction()
 {
+  memset(this, 0, sizeof(void*)); // Force VMT clean (for better crash)
+  if (this->input) {
+    this->input->close();
+    this->input = 0;
+  }
+  this->onSend.Reset();
+  this->onChunk.Reset();
+  this->onEnd.Reset();
   TRACE_LEAK(printf("<WebxHttpTransaction %d>\n", int(--leakcount)));
 }
 
@@ -117,5 +125,5 @@ void WebxHttpTransaction::completeEvents() {
 void WebxHttpTransaction::free()
 {
   _ASSERT(!this->output.flush());
-  delete this;
+  //delete this; // Crash with vs2012 debugger
 }

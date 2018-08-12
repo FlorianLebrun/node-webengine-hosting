@@ -98,6 +98,7 @@ export class WebxEngine extends WebxSessionBase {
 
   connect(options) {
     if (!this.handle && !this.readyState) {
+      const config = options.config ? JSON.stringify(options.config) : ""
       this.options = options
 
       // Update process environement
@@ -110,7 +111,7 @@ export class WebxEngine extends WebxSessionBase {
       this.handle = new addon.WebxEngine(
         options.dll.path,
         options.dll.entryName,
-        JSON.stringify(options.config),
+        config,
         WebxEngine__handleEvent.bind(this)
       )
 

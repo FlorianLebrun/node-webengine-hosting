@@ -1,28 +1,27 @@
 #include "./WebxEngine.h"
 
+TRACE_LEAK(static std::atomic<intptr_t> leakcount = 0);
+
 WebxEngine::WebxEngine(v8::Local<v8::Function> onEvent)
   : WebxSessionObjectWrap(onEvent)
 {
   this->instance = 0;
+  TRACE_LEAK(printf("<WebxEngine %d>\n", int(++leakcount)));
 }
 
 WebxEngine::~WebxEngine()
 {
-  if (this->context)
-  {
-    this->context->close();
-    this->context = 0;
-  }
+  TRACE_LEAK(printf("<WebxEngine %d>\n", int(--leakcount)));
 }
 
 void WebxEngine::completeEvents()
 {
   using namespace v8;
+  Isolate *isolate = Isolate::GetCurrent();
+  HandleScope scope(isolate);
+
   if (webx::Ref<webx::IEvent> events = this->events.flush())
   {
-    Isolate *isolate = Isolate::GetCurrent();
-    HandleScope scope(isolate);
-
     Local<Function> onEvent = Local<Function>::New(isolate, this->onEvent);
     for (webx::IEvent *ev = events; ev; ev = ev->next)
     {

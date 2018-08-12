@@ -17,6 +17,9 @@ namespace v8h
   public:
     v8::Persistent<v8::Object> handle;
 
+    ~ObjectWrap() {
+      this->handle.Reset();
+    }
     inline void AttachObject(v8::Local<v8::Object> object) {
       assert(this->handle.IsEmpty());
       assert(object->InternalFieldCount() > 0);

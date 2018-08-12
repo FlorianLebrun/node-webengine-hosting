@@ -36,6 +36,7 @@ public:
   static void New(const Nan::FunctionCallbackInfo<v8::Value> &onNotification);
 
   static void getName(const Nan::FunctionCallbackInfo<v8::Value> &args);
+  static void dispatchEvent(const Nan::FunctionCallbackInfo<v8::Value> &args);
   static void close(const Nan::FunctionCallbackInfo<v8::Value> &args);
 };
 

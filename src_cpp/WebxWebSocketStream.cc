@@ -1,7 +1,7 @@
 #include "./WebxWebSocketStream.h"
 
 WebxWebSocketStream::WebxWebSocketStream(v8::Local<v8::Object> req, v8::Local<v8::Function> onAccept, v8::Local<v8::Function> onReject)
-    : output(this, this->completeEvents_sync)
+  : output(this, this->completeEvents_sync)
 {
   using namespace v8;
   this->status = Starting;
@@ -28,6 +28,14 @@ WebxWebSocketStream::WebxWebSocketStream(v8::Local<v8::Object> req, v8::Local<v8
 
 WebxWebSocketStream::~WebxWebSocketStream()
 {
+  if (this->opposite) {
+    this->opposite->close();
+    this->opposite = 0;
+  }
+  this->onAccept.Reset();
+  this->onClose.Reset();
+  this->onMessage.Reset();
+  this->onReject.Reset();
 }
 
 bool WebxWebSocketStream::connect(webx::IStream *stream)
@@ -40,12 +48,10 @@ bool WebxWebSocketStream::connect(webx::IStream *stream)
 
 void WebxWebSocketStream::read(webx::IData *data)
 {
-  if (this->opposite)
-  {
+  if (this->opposite) {
     this->opposite->write(data);
   }
-  else
-  {
+  else {
     throw "Shall be accepted before data";
   }
 }
@@ -83,7 +89,7 @@ void WebxWebSocketStream::completeEvents()
         char* buffer;
         uint32_t size;
         data->getData(buffer, size);
-        Local<Value> argv[] = {v8h::MakeString(buffer, size)};
+        Local<Value> argv[] = { v8h::MakeString(buffer, size) };
         Local<Function> onMessage = Local<Function>::New(isolate, this->onMessage);
         onMessage->Call(isolate->GetCurrentContext()->Global(), 1, argv);
       }
@@ -96,14 +102,14 @@ void WebxWebSocketStream::completeEvents()
     {
     case Accepted:
     {
-      Local<Value> argv[] = {this->handle.Get(isolate)};
+      Local<Value> argv[] = { this->handle.Get(isolate) };
       Local<Function> onAccept = Local<Function>::New(isolate, this->onAccept);
       onAccept->Call(isolate->GetCurrentContext()->Global(), 1, argv);
     }
     break;
     case Rejected:
     {
-      Local<Value> argv[] = {Nan::New(404)};
+      Local<Value> argv[] = { Nan::New(404) };
       Local<Function> onReject = Local<Function>::New(isolate, this->onReject);
       onReject->Call(isolate->GetCurrentContext()->Global(), 1, argv);
     }

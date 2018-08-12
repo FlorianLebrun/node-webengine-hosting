@@ -12,32 +12,48 @@ void WebxSessionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args[0]->ToObject());
-  Local<String> name = args[1].As<v8::String>();
-  Local<String> config = args[2].As<v8::String>();
+  if (WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args[0]->ToObject())) {
+    Local<String> name = args[1].As<v8::String>();
+    Local<String> config = args[2].As<v8::String>();
 
-  WebxSession *session = new WebxSession(args[3].As<v8::Function>());
-  session->context = engine->instance->createSession(session, *Utf8Value(name), *Utf8Value(config));
-  session->AttachObject(args.This());
+    WebxSession *session = new WebxSession(args[3].As<v8::Function>());
+    session->context = engine->instance->createSession(session, *Utf8Value(name), *Utf8Value(config));
+    session->AttachObject(args.This());
 
-  args.GetReturnValue().Set(args.This());
+    args.GetReturnValue().Set(args.This());
+  }
+  else {
+    Nan::ThrowError("Cannot create a session on a closed engine");
+  }
 }
 
 void WebxSessionJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxSession *session = WebxSession::Unwrap<WebxSession>(args.Holder());
-  if(session->context) {
-    const char *name = session->context->getName();
-    args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
+  if (WebxSession *session = WebxSession::Unwrap<WebxSession>(args.Holder())) {
+    if (session->context) {
+      const char *name = session->context->getName();
+      args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
+    }
   }
+  else {
+    Nan::ThrowError("Cannot get a session name on a closed session");
+  }
+}
+
+void WebxSessionJS::dispatchEvent(const Nan::FunctionCallbackInfo<v8::Value> &args) {
+  Nan::ThrowError("WebxSessionJS::dispatchEvent not implemented");
 }
 
 void WebxSessionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  WebxSession *session = WebxSession::Unwrap<WebxSession>(args.Holder());
-  session->context->close();
+  if (WebxSession *session = WebxSession::Unwrap<WebxSession>(args.Holder())) {
+    session->context->close();
+  }
+  else {
+    Nan::ThrowError("Cannot close on a closed session");
+  }
 }
 
 v8::Local<v8::Function> WebxSessionJS::CreatePrototype()
@@ -50,6 +66,7 @@ v8::Local<v8::Function> WebxSessionJS::CreatePrototype()
 
   // Prototype
   Nan::SetPrototypeMethod(tpl, "getName", WebxSessionJS::getName);
+  Nan::SetPrototypeMethod(tpl, "dispatchEvent", WebxSessionJS::dispatchEvent);
   Nan::SetPrototypeMethod(tpl, "close", WebxSessionJS::close);
 
   constructor.Reset(tpl->GetFunction());
