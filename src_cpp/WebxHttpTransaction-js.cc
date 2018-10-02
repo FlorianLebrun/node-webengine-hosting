@@ -43,12 +43,14 @@ void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
       }
       else printf(">>> Lost chunk\n");
       data->release();
+      args.GetReturnValue().Set(true);
     }
     else
       Nan::ThrowError("Cannot write this type of chunk");
   }
   else {
-    Nan::ThrowError("Cannot write on a closed http transaction");
+    // Cannot write on a closed http transaction
+    args.GetReturnValue().Set(false);
   }
 }
 
@@ -60,9 +62,11 @@ void WebxHttpTransactionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &ar
       transaction->input->close();
       transaction->input = 0;
     }
+    args.GetReturnValue().Set(true);
   }
   else {
-    Nan::ThrowError("Cannot close on a closed http transaction");
+    // Cannot close on a closed http transaction
+    args.GetReturnValue().Set(false);
   }
 }
 
