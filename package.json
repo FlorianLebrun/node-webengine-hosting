@@ -20,14 +20,13 @@
     "body-parser": "^1.18.2",
     "express": "^4.16.3",
     "node-watch": "^0.5.8",
-    "node-pre-gyp": "^0.12.0",
     "node-gyp": "^3.6.2"
   },
   "scripts": {
     "start": "node ./scripts/launch-monitor ./.build/lib",
     "update": "tsc -w",
-    "build": "node-pre-gyp rebuild && node ./scripts/build",
-    "build:cpp": "node-pre-gyp rebuild",
+    "build": "node-gyp rebuild && node ./scripts/build",
+    "build:cpp": "node-gyp rebuild",
     "build:js": "node ./scripts/build"
   }
 }
