@@ -1,4 +1,3 @@
-import { debug } from "@common"
 import child_process, { ChildProcess } from "child_process"
 import httpProxy from "http-proxy"
 import Path from "path"
@@ -8,9 +7,9 @@ function NotOnline(req, res) { res.status(404).send("Application not online") }
 export class WebxEngineRemote {
   host: ChildProcess
   name: string = "(remote)"
-  proxy: HttpProxy = null
-  connecting: Array = null
-  listeners: Array = []
+  proxy: httpProxy = null
+  connecting: Function[] = null
+  listeners: Function[] = []
 
   getName() {
     return this.name
@@ -21,7 +20,7 @@ export class WebxEngineRemote {
   removeEventListener(callback: Function) {
     callback && this.listeners.splice(this.listeners.indexOf(callback), 1)
   }
-  connect(options: Object, callback: Function): Promise {
+  connect(options: Object, callback: Function) {
     if (!this.host && !this.connecting) {
       this.host = child_process.fork(Path.dirname(__filename) + "../../../dist/lib/remote_child.js", [], {
         cwd: process.cwd(),
@@ -73,7 +72,7 @@ export class WebxEngineRemote {
     this.connecting = null
     this.handleEvent("connected", msg)
   }
-  handleEvent = (event, data) => {
+  handleEvent = (event: string, data?: any) => {
     for (const cb of this.listeners) {
       cb(event, data)
     }

@@ -1,4 +1,4 @@
-import fs from "./fs2"
+import fs from "./fs"
 import debug from "./debug"
 
 export { fs, debug }

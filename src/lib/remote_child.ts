@@ -1,6 +1,6 @@
-import { debug } from "@common"
+import { debug } from "../common"
 import express from "express"
-import { CreateWebxEngine, WebxEngine } from "../lib/WebxEngine"
+import { WebxEngineRemote } from "./WebxEngineRemote"
 import { WebsocketResponse } from "./WebsocketResponse"
 
 const modules = {}
@@ -10,10 +10,9 @@ function ipc_require(msg) {
 }
 
 function ipc_webx_connect(config) {
-  CreateWebxEngine(config, (engine: WebxEngine) => {
-    engine.createMainSession(config, (session: WebxSession) => {
-      openServer(engine, session)
-    })
+  const engine = new WebxEngineRemote()
+  engine.connect(config, (session) => {
+    openServer(engine, session)
   })
 }
 

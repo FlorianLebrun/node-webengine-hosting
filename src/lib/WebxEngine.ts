@@ -1,10 +1,10 @@
-import { debug } from "@common"
-const addon = require("bindings")("addon")
+import { debug } from "../common"
+const addon: any = require("bindings")("addon")
 
 export class WebxSessionBase {
   name: string
   readyState: boolean = false
-  handle: addon.WebxSession = null
+  handle: any = null //addon.WebxSession
 
   disconnect() {
     if (this.readyState) {
@@ -95,7 +95,8 @@ export class WebxSession extends WebxSessionBase {
 }
 
 export class WebxEngine extends WebxSessionBase {
-
+  options: any
+  
   connect(options) {
     if (!this.handle && !this.readyState) {
       const config = options.config ? JSON.stringify(options.config) : ""

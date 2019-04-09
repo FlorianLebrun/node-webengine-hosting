@@ -1,7 +1,6 @@
 {
   "window.title": "webengine-hosting",
-  "eslint.autoFixOnSave": true,
-  "typescript.validate.enable": false,
+  "typescript.validate.enable": true,
   "javascript.validate.enable": false,
   "editor.detectIndentation": false,
   "editor.tabSize": 2,

@@ -15,4 +15,5 @@ intl/messages.json
 /Dll
 /src/test
 .output
+.build
 package-lock.json

@@ -4,8 +4,8 @@ import crypto from "crypto"
 
 const WebSocket = require("ws")
 
-export function WebsocketResponse(req, socket, head, maxPayloadSize) {
-  var res = new ServerResponse(req)
+export function WebsocketResponse(req, socket, head, maxPayloadSize?: any) {
+  var res: any = new ServerResponse(req)
   res.assignSocket(socket)
   res.head = head
   res.reject = res.send = function (chunk) {
