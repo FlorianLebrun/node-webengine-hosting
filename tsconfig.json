@@ -16,6 +16,6 @@
     }
   },
   "files": [
-    "src/lib/index.ts",
+    "src/index.ts",
   ]
 }

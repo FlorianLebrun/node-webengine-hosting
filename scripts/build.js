@@ -12,7 +12,7 @@ child_process.execSync("tsc", { stdio: 'inherit' })
 */
 const dts = require('./dts-bundle-index.js');
 const dts_result = dts.bundle({
-  name: 'react-application-server',
+  name: package_json.name,
   main: './.build/index.d.ts',
   baseDir: "./.build",
   out: '../dist/index.d.ts'
