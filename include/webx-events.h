@@ -6,11 +6,6 @@
 
 namespace webx
 {
-  class IPipeable;
-}
-
-namespace webx
-{
   // Events ID
   static const int undefinedEventID = 0;
   static const int dataEventID = 1;
@@ -26,22 +21,6 @@ namespace webx
     webx::Ref<IEvent> next;
     virtual int eventID() { return undefinedEventID; }
     virtual const char *eventName() { return "undefined"; }
-  };
-
-  // Interface of data event
-  class IData : public IEvent
-  {
-  public:
-    virtual int eventID() override { return dataEventID; }
-    virtual const char *eventName() override { return "data"; }
-
-    // getData: provide buffer, and return true when data is full, false when is chunked
-    virtual bool getData(char* &buffer, uint32_t &size) = 0;
-
-    // getOrigin: provide the pipe which send the data
-    virtual IPipeable* getOrigin() { return 0; }
-
-    static IData *New(const char* buffer, int size);
   };
 
   // -------------------------------------------------
@@ -89,35 +68,16 @@ namespace webx
       this->first = 0;
       return New(data);
     }
+    int count()
+    {
+      int c = 0;
+      for(IEvent* evt=this->first;evt;evt=evt->next) c++;
+      return c;
+    }
     operator bool() {
       return this->first != 0;
     }
   };
 
-  inline IData *IData::New(const char* buffer, int size)
-  {
-    class Data : public StringMapBasedAttributs<Releasable<IData>>
-    {
-    public:
-      uint32_t size;
-      char buffer[1];
-      Data(const char* buffer, uint32_t size)
-      {
-        this->next = 0;
-        this->size = size;
-        memcpy(this->buffer, buffer, size);
-      }
-      virtual bool getData(char* &buffer, uint32_t &size) {
-        buffer = this->buffer;
-        size = this->size;
-        return true;
-      }
-      virtual void free() override
-      {
-        ::free(this);
-      }
-    };
-    return new (::malloc(sizeof(Data) + size)) Data(buffer, size);
-  }
 } // namespace webx
 #endif

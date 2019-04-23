@@ -7,6 +7,10 @@
 #include <string>
 #include <atomic>
 
+#ifdef _DEBUG
+#define _RELEASABLE_DEBUG
+#endif
+
 namespace webx
 {
 
@@ -40,12 +44,20 @@ namespace webx
     void New(CReleasable* object) {
       this->_object = object;
     }
+    CReleasable* flush() {
+      CReleasable* object = this->_object;
+      this->_object = 0;
+      return object;
+    }
     CReleasable* operator = (CReleasable* object) {
       if (this->_object) this->_object->release();
       if (object) object->retain();
       return this->_object = object;
     }
     CReleasable* operator -> () {
+      return this->_object;
+    }
+    CReleasable* operator * () {
       return this->_object;
     }
     operator bool() {
@@ -67,7 +79,7 @@ namespace webx
     return ref;
   }
 
-#ifdef _DEBUG
+#ifdef _RELEASABLE_DEBUG
   static std::atomic<int> _s_object_count;
 #endif
 
@@ -79,7 +91,7 @@ namespace webx
 
     Releasable() : nref(1)
     {
-#ifdef _DEBUG
+#ifdef _RELEASABLE_DEBUG
       _s_object_count++;
       //printf("(+) %s %d\n", typeid(CReleasable).name(), (int)_s_object_count);
       if (_s_object_count > 20) {
@@ -94,14 +106,15 @@ namespace webx
     virtual void release() override
     {
       if ((--this->nref) <= 0) {
-#ifdef _DEBUG
+#ifdef _RELEASABLE_DEBUG
         _s_object_count--;
         //printf("(-) %s %d\n", typeid(CReleasable).name(), (int)_s_object_count);
         if (this->nref < 0) {
           printf("(!) crash risk on %s\n", typeid(CReleasable).name());
         }
-#endif
+#else
         this->free();
+#endif
       }
     }
     virtual void free() = 0;

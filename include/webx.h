@@ -8,71 +8,49 @@
 #include "./webx-attributs.h"
 #include "./webx-releasables.h"
 #include "./webx-events.h"
+#include "./webx-datagrams.h"
 
 namespace webx
 {
-class IReleasable;
-class IAttributs;
+  class ISessionContext;
+  class IEngineContext;
+  class ISessionHost;
+  class IEngineHost;
 
-class IPipeable;
-class IStream;
+  class IEndPoint : public IAttributs
+  {
+  public:
+    virtual void dispatchDatagram(IDatagram *transaction) = 0;
+    //virtual void dispatchListener(IDatagramListener *listener) = 0;
+    virtual void notify(IEvent *event) = 0;
+  };
 
-class ISessionContext;
-class IEngineContext;
-class ISessionHost;
-class IEngineHost;
+  class ISessionContext : public IEndPoint
+  {
+  public:
+    virtual const char *getName() = 0;
+    virtual bool close() = 0;
+  };
 
-class IPipeable : public IAttributs
-{
-public:
-  // Connect the pipeline to an opposite stream
-  virtual bool connect(IStream *stream) = 0;
-};
+  class ISessionHost : public IEndPoint
+  {
+  public:
+    virtual bool disconnect() = 0;
+  };
 
-class IStream : public IPipeable
-{
-public:
-  // Push a data packet on the stream
-  virtual bool write(IData *data) = 0;
+  class IEngineContext : public ISessionContext
+  {
+  public:
+    virtual ISessionContext *createSession(ISessionHost *host, const char* name, const char *config) = 0;
+  };
 
-  // Notify the end of stream (no write can be done after)
-  virtual void close() = 0;
-};
+  class IEngineHost : public ISessionHost
+  {
+  public:
 
-class IEndPoint : public IAttributs
-{
-public:
-  virtual void dispatchTransaction(IStream *request) = 0;
-  virtual void dispatchWebSocket(IStream *stream) = 0;
-  virtual void notify(IEvent *event) = 0;
-};
+  };
 
-class ISessionContext : public IEndPoint
-{
-public:
-  virtual const char *getName() = 0;
-  virtual bool close() = 0;
-};
-
-class ISessionHost : public IEndPoint
-{
-public:
-  virtual bool disconnect() = 0;
-};
-
-class IEngineContext : public ISessionContext
-{
-public:
-  virtual ISessionContext *createSession(ISessionHost *host, const char* name, const char *config) = 0;
-};
-
-class IEngineHost : public ISessionHost
-{
-public:
-
-};
-
-typedef IEngineContext *(*tEngineConnectProc)(IEngineHost *host, const char *config);
+  typedef IEngineContext *(*tEngineConnectProc)(IEngineHost *host, const char *config);
 
 } // namespace webx
 
