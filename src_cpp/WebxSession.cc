@@ -36,14 +36,9 @@ void WebxSession::completeEvents()
   }
 }
 
-void WebxSession::dispatchTransaction(webx::IStream *request) {
+void WebxSession::dispatchDatagram(webx::IDatagram *datagram) {
   printf("!Error: Session host not support dispatchTransaction\n");
-  request->close();
-}
-
-void WebxSession::dispatchWebSocket(webx::IStream *stream) {
-  printf("!Error: Session host not support dispatchWebSocket\n");
-  stream->close();
+  datagram->discard();
 }
 
 void WebxSession::notify(webx::IEvent *event)

@@ -7,16 +7,23 @@
 class WebxHttpTransaction;
 class WebxHttpTransactionJS;
 
-class WebxHttpTransaction : public v8h::ObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::IStream>>
+class WebxHttpTransaction : public v8h::ObjectWrap, 
+  public v8h::StringMapBasedAttributs<webx::Releasable<webx::IDatagram>>, 
+  public webx::IDatagramHandler
 {
 public:
   friend WebxHttpTransactionJS;
 
-  webx::Ref<webx::IStream> input;
-  v8h::EventQueue<webx::IData> output;
-  v8::Persistent<v8::Function> onSend;
-  v8::Persistent<v8::Function> onChunk;
-  v8::Persistent<v8::Function> onEnd;
+  webx::IDatagramHandler* requestHandler;
+  webx::DataQueue requestData;
+
+  webx::Ref<webx::IDatagram> response;
+  v8h::EventQueue<webx::IData> responseData;
+
+  v8::Persistent<v8::Function> onSendCallback;
+  v8::Persistent<v8::Function> onChunkCallback;
+  v8::Persistent<v8::Function> onEndCallback;
+  webx::tIOStatus requestStatus;
 
   WebxHttpTransaction(
     v8::Local<v8::Object> req,
@@ -25,10 +32,17 @@ public:
     v8::Local<v8::Function> onEnd);
   ~WebxHttpTransaction();
 
-  virtual bool connect(webx::IStream *stream) override;
-  virtual bool write(webx::IData *data) override;
-  virtual void close() override;
+  virtual bool accept(webx::IDatagramHandler *handler) override;
+  virtual bool send(webx::IDatagram *response) override;
+  virtual webx::tIOStatus getStatus() override {return this->requestStatus;}
+  virtual webx::IData* pullData() override { return 0; }
+  virtual webx::IDatagram* pullAttachment() override { return 0; }
   virtual void free() override;
+
+  virtual void onData(webx::IDatagram* from);
+  virtual void onAttachment(webx::IDatagram* from) {}
+  virtual void onComplete(webx::IDatagram* from);
+  virtual void disconnect();
 
   void completeEvents();
   static void completeEvents_sync(uv_async_t *handle) {

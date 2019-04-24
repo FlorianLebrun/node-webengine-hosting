@@ -19,8 +19,7 @@ public:
   ~WebxEngine();
 
   void connect(const char *dllPath, const char *dllEntryPoint, const char *config);
-  virtual void dispatchTransaction(webx::IStream *request) override;
-  virtual void dispatchWebSocket(webx::IStream *stream) override;
+  virtual void dispatchDatagram(webx::IDatagram *datagram) override;
   virtual void notify(webx::IEvent* event) override;
   virtual bool disconnect() override;
   virtual void free() override;

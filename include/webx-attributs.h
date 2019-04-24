@@ -36,7 +36,7 @@ namespace webx
       const char* _string;
       int64_t _integer;
       double _float;
-      LPVOID _undefined;
+      void* _undefined;
     };
     int typeId;
     int size;
@@ -66,8 +66,8 @@ namespace webx
       char tmp[32];
       switch(this->typeId) {
       case stringId: return this->_string;
-      case integerId: return _i64toa(this->_integer, tmp, 10);
-      case floatId: return gcvt(this->_float, 12, tmp);
+      case integerId: _i64toa_s(this->_integer, tmp, sizeof(tmp), 10); return tmp;
+      case floatId: _gcvt_s(tmp, sizeof(tmp), this->_float, 12); return tmp;
       }
       return "";
     }
@@ -81,7 +81,7 @@ namespace webx
     }
     double toFloat() {
       switch(this->typeId) {
-      case stringId: return _atoi64(this->_string);
+      case stringId: return atof(this->_string);
       case integerId: return double(this->_integer);
       case floatId: return this->_float;
       }

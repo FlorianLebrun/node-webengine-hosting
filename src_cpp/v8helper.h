@@ -143,22 +143,9 @@ namespace v8h
     {
       notification->visitAttributs(this);
     }
-    virtual void visitInt(const char *name, int64_t value) override
+    virtual void visit(const char *name, webx::AttributValue value) override
     {
-      this->data->Set(Nan::New(name).ToLocalChecked(), Nan::New((int32_t)value));
-    }
-    virtual void visitFloat(const char *name, double value) override
-    {
-      this->data->Set(Nan::New(name).ToLocalChecked(), Nan::New(value));
-    }
-    virtual void visitObject(const char *name, webx::IAttributs *value) override
-    {
-      v8h::ObjectVisitor object(value);
-      this->data->Set(Nan::New(name).ToLocalChecked(), object.data);
-    }
-    virtual void visitString(const char *name, const char *value) override
-    {
-      this->data->Set(Nan::New(name).ToLocalChecked(), Nan::New(value).ToLocalChecked());
+      this->data->Set(Nan::New(name).ToLocalChecked(), Nan::New(value.getStringPtr(), value.getStringLen()).ToLocalChecked());
     }
   };
 

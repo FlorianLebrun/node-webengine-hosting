@@ -64,14 +64,9 @@ void WebxEngine::connect(const char *dllPath, const char *dllEntryPoint, const c
   }
 }
 
-void WebxEngine::dispatchTransaction(webx::IStream *request) {
-  printf("!Error: Engine host not support dispatchTransaction\n");
-  request->close();
-}
-
-void WebxEngine::dispatchWebSocket(webx::IStream *stream) {
-  printf("!Error: Engine host not support dispatchWebSocket\n");
-  stream->close();
+void WebxEngine::dispatchDatagram(webx::IDatagram *datagram) {
+  printf("!Error: Engine host not support dispatchDatagram\n");
+  datagram->discard();
 }
 
 void WebxEngine::notify(webx::IEvent *event)

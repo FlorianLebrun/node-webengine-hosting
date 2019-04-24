@@ -19,7 +19,7 @@ void WebxHttpTransactionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args
     WebxHttpTransaction *transaction = new WebxHttpTransaction(req, onSend, onChunk, onEnd);
     transaction->AttachObject(args.This());
 
-    session->context->dispatchTransaction(transaction);
+    session->context->dispatchDatagram(transaction);
 
     args.GetReturnValue().Set(args.This());
   }
@@ -37,9 +37,9 @@ void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
 
     if (webx::IData *data = v8h::NewDataFromValue(args[0]))
     {
-      if (transaction->input)
+      if (transaction->requestHandler)
       {
-        transaction->input->write(data);
+        transaction->requestHandler->onData(transaction);
       }
       else printf(">>> Lost chunk\n");
       data->release();
@@ -58,9 +58,10 @@ void WebxHttpTransactionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &ar
 {
   using namespace v8;
   if (WebxHttpTransaction *transaction = WebxHttpTransaction::Unwrap<WebxHttpTransaction>(args.Holder())) {
-    if (transaction->input) {
-      transaction->input->close();
-      transaction->input = 0;
+    if (transaction->requestHandler) {
+      transaction->requestStatus.data_end = 1;
+      transaction->requestHandler->onComplete(transaction);
+      transaction->requestHandler = 0;
     }
     args.GetReturnValue().Set(true);
   }
