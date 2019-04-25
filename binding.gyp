@@ -10,8 +10,6 @@
         "src_cpp/WebxEngine-js.cc",
         "src_cpp/WebxHttpTransaction.cc",
         "src_cpp/WebxHttpTransaction-js.cc",
-        "src_cpp/WebxWebSocketStream.cc",
-        "src_cpp/WebxWebSocketStream-js.cc",
         "src_cpp/WebxSession.cc",
         "src_cpp/WebxSession-js.cc"
       ],

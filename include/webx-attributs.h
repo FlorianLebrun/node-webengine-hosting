@@ -182,20 +182,21 @@ namespace webx
   {
   public:
     typedef std::map<std::string, std::string, KeyCompare> tAttributs;
+    typedef std::map<std::string, std::string> tAttributsMap;
 
     tAttributs attributs;
 
     virtual void visitAttributs(webx::IAttributsVisitor *visitor) override
     {
-      tAttributs::const_iterator end = this->attributs.end();
-      for (tAttributs::const_iterator it = this->attributs.begin(); it != end; ++it)
+      tAttributsMap::const_iterator end = this->attributs.end();
+      for (tAttributsMap::const_iterator it = this->attributs.begin(); it != end; ++it)
       {
         visitor->visit(it->first.c_str(), it->second.c_str());
       }
     }
     virtual AttributValue getAttribut(const char *name) override
     {
-      tAttributs::iterator it = this->attributs.find(name);
+      tAttributsMap::iterator it = this->attributs.find(name);
       if (it != this->attributs.end()) {
         return this->attributs[name].c_str();
       }
@@ -208,8 +209,8 @@ namespace webx
     }
     void print()
     {
-      tAttributs::const_iterator end = this->attributs.end();
-      for (tAttributs::const_iterator it = this->attributs.begin(); it != end;
+      tAttributsMap::const_iterator end = this->attributs.end();
+      for (tAttributsMap::const_iterator it = this->attributs.begin(); it != end;
         ++it)
       {
         std::cout << it->first << ": " << it->second << "\n";
