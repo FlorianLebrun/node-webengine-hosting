@@ -31,7 +31,7 @@ namespace webx
   class ISession : public IEndPoint
   {
   public:
-    virtual std::string getName() = 0;
+    virtual const char* getName() = 0;
     virtual bool hasSessionAffinity() = 0;
     virtual bool close() = 0;
   };
@@ -45,18 +45,18 @@ namespace webx
   class ISessionType : public IReleasable
   {
   public:
-    virtual std::string getName() = 0;
+    virtual const char* getName() = 0;
     virtual IValue* getAttributs() {return &IValue::Undefined;}
   };
 
   class IEngine : public ISession
   {
   public:
-    virtual bool hasSessionAffinity(std::string type) = 0;
-    virtual ISessionType* createSessionType(std::string type, const char* json) = 0;
+    virtual bool hasSessionAffinity(const char* type) = 0;
+    virtual ISessionType* createSessionType(const char* type, const char* json) = 0;
     virtual void visitSessionTypes(const std::function<void(ISessionType*)>& visitor) = 0;
     
-    virtual ISession *createSession(std::string type, std::string name, ISessionHost *host) = 0;
+    virtual ISession *createSession(const char* type, const char* name, ISessionHost *host) = 0;
     virtual void visitSessions(const std::function<void(ISession*)>& visitor) = 0;
   };
 

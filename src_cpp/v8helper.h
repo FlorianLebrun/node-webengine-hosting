@@ -138,7 +138,9 @@ namespace v8h
   inline v8::Local<v8::Object> createObjectFromValue(webx::IValue* value) {
     v8::Local<v8::Object> data(Nan::New<v8::Object>());
     value->foreach([&data](const webx::IValue& key, const webx::IValue& value) {
-      data->Set(Nan::New(key.toString()).ToLocalChecked(), Nan::New(key.toString()).ToLocalChecked());
+      std::string vkey = key.toString();
+      std::string vvalue = value.toString();
+      data->Set(Nan::New(vkey).ToLocalChecked(), Nan::New(vvalue).ToLocalChecked());
     });
     return data;
   }

@@ -32,6 +32,66 @@ namespace webx {
     nullId,
   };
 
+
+  struct String {
+    String() {
+      this->ptr = 0;
+    }
+    String(String& value) {
+      this->ptr = value.ptr;
+      this->pfree = value.pfree;
+      value.ptr = 0;
+    }
+    String(const char* value) {
+      printf("New %s\n", value);
+      this->ptr = _strdup(value);
+      this->pfree = ::free;
+    }
+    String(std::string value) {
+      printf("New %s\n", value.c_str());
+      this->ptr = _strdup(value.c_str());
+      this->pfree = ::free;
+    }
+    ~String() {
+      if (this->ptr) {
+        printf("Free %s\n", this->ptr);
+        this->pfree(this->ptr);
+      }
+    }
+    void operator = (String& value) {
+      this->ptr = value.ptr;
+      this->pfree = value.pfree;
+      value.ptr = 0;
+    }
+    void operator = (const char* value) {
+      if (this->ptr) {
+        printf("Free %s\n", this->ptr);
+        this->pfree(this->ptr);
+      }
+      printf("New %s\n", value);
+      this->ptr = _strdup(value);
+      this->pfree = ::free;
+    }
+    void operator = (std::string value) {
+      if (this->ptr) {
+        printf("Free %s\n", this->ptr);
+        this->pfree(this->ptr);
+      }
+      printf("New %s\n", value.c_str());
+      this->ptr = _strdup(value.c_str());
+      this->pfree = ::free;
+    }
+    operator const char*() {
+      return this->ptr;
+    }
+    operator bool() {
+      return this->ptr != 0;
+    }
+  private:
+    char* ptr;
+    void(*pfree)(void*);
+  };
+
   struct IForeachVisitor {
     template<class Ft> struct _lambda;
     virtual void operator() (const IValue& key, const IValue& value) = 0;
@@ -56,19 +116,19 @@ namespace webx {
 
     // Map API
     virtual bool get(const char* key, get_visitor_t visitor) const;
-    virtual std::string getString(const char* key) const;
+    virtual String getString(const char* key) const;
     virtual double getNumber(const char* key) const;
     virtual int64_t getInteger(const char* key) const;
 
     // Array API
     virtual bool get(size_t key, get_visitor_t visitor) const;
-    virtual std::string getString(size_t key) const;
+    virtual String getString(size_t key) const;
     virtual double getNumber(size_t key) const;
     virtual int64_t getInteger(size_t key) const;
 
     // String API
     virtual void toJSON(std::stringstream& out) const;
-    virtual std::string toString() const;
+    virtual const char* toString() const;
 
     // Number API
     virtual double toNumber() const;
@@ -92,7 +152,7 @@ namespace webx {
     virtual void toJSON(std::stringstream& out) const override {
       out << "null";
     }
-    virtual std::string toString() const override {
+    virtual const char* toString() const override {
       return "null";
     }
   };
@@ -108,7 +168,7 @@ namespace webx {
     virtual void toJSON(std::stringstream& out) const override {
       out << (this->value ? "true" : "false");
     }
-    virtual std::string toString() const override {
+    virtual const char* toString() const override {
       return this->value ? "true" : "false";
     }
     virtual double toNumber() const override {
@@ -121,6 +181,7 @@ namespace webx {
 
   struct IntegerValue : IValue {
     int64_t value;
+    mutable char tmp[32];
     IntegerValue(int64_t value) {
       this->value = value;
     }
@@ -130,9 +191,8 @@ namespace webx {
     virtual void toJSON(std::stringstream& out) const override {
       out << this->value;
     }
-    virtual std::string toString() const override {
-      char tmp[32];
-      if (_i64toa_s(this->value, tmp, sizeof(tmp), 10)) return "NaN";
+    virtual const char* toString() const override {
+      if (_i64toa_s(this->value, this->tmp, sizeof(tmp), 10)) return "NaN";
       return tmp;
     }
     virtual double toNumber() const override {
@@ -145,6 +205,7 @@ namespace webx {
 
   struct NumberValue : IValue {
     double value;
+    mutable char tmp[32];
     NumberValue(double value) {
       this->value = value;
     }
@@ -154,10 +215,9 @@ namespace webx {
     virtual void toJSON(std::stringstream& out) const override {
       out << this->value;
     }
-    virtual std::string toString() const override {
-      char tmp[32];
-      if (_gcvt_s(tmp, this->value, 12)) return "NaN";
-      return tmp;
+    virtual const char* toString() const override {
+      if (_gcvt_s(this->tmp, this->value, 12)) return "NaN";
+      return this->tmp;
     }
     virtual double toNumber() const override {
       return this->value;
@@ -169,10 +229,8 @@ namespace webx {
 
   struct C_StringValue : IValue {
     const char* value;
-    int size;
-    C_StringValue(const char* value, int size = -1) {
+    C_StringValue(const char* value) {
       this->value = value;
-      this->size = size;
     }
     virtual tTypeId getTypeId() const override {
       return stringId;
@@ -180,9 +238,8 @@ namespace webx {
     virtual void toJSON(std::stringstream& out) const override {
       out << "\"" << this->toString() << "\"";
     }
-    virtual std::string toString() const override {
-      if (this->size < 0) return this->value;
-      else return std::string(this->value, this->size);
+    virtual const char* toString() const override {
+      return this->value;
     }
     virtual double toNumber() const override {
       return strtod((char*)this->value, 0);
@@ -204,8 +261,8 @@ namespace webx {
     virtual void toJSON(std::stringstream& out) const override {
       out << "\"" << this->value << "\"";
     }
-    virtual std::string toString() const override {
-      return this->value;
+    virtual const char* toString() const override {
+      return this->value.c_str();
     }
     virtual double toNumber() const override {
       return std::stod(this->value);
@@ -225,8 +282,8 @@ namespace webx {
     virtual void toJSON(std::stringstream& out) const override {
       out << "\"" << this->value << "\"";
     }
-    virtual std::string toString() const override {
-      return this->value;
+    virtual const char* toString() const override {
+      return this->value.c_str();
     }
     virtual double toNumber() const override {
       return std::stod(this->value);

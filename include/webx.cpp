@@ -31,10 +31,12 @@ bool IValue::get(const char* key, get_visitor_t visitor) const {
   }
   return false;
 }
-std::string IValue::getString(const char* key) const {
-  std::string x;
-  if (this->get(key, [&x](const IValue& value) {x = value.toString(); })) return x;
-  else return "";
+String IValue::getString(const char* key) const {
+  String x;
+  this->get(key, [&x](const IValue& value) {
+    x = value.toString();
+  });
+  return x;
 }
 double IValue::getNumber(const char* key) const {
   double x = 0.0; this->get(key, [&x](const IValue& value) {x = value.toNumber(); });
@@ -59,10 +61,12 @@ bool IValue::get(size_t key, get_visitor_t visitor) const {
   }
   return false;
 }
-std::string IValue::getString(size_t key) const {
-  std::string x;
-  if (this->get(key, [&x](const IValue& value) {x = value.toString(); })) return x;
-  else return "";
+String IValue::getString(size_t key) const {
+  String x;
+  this->get(key, [&x](const IValue& value) {
+    x = value.toString();
+  });
+  return x;
 }
 double IValue::getNumber(size_t key) const {
   double x = 0.0; this->get(key, [&x](const IValue& value) {x = value.toNumber(); });
@@ -116,7 +120,7 @@ void IValue::toJSON(std::stringstream& out) const {
     break;
   }
 }
-std::string IValue::toString() const {
+const char* IValue::toString() const {
   return "";
 }
 

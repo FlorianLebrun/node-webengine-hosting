@@ -1,5 +1,6 @@
 import crypto from "crypto"
 import express from "express"
+import cookieParser from "cookie-parser"
 import { fs, debug } from "../common"
 import { WebxEngine, WebxSession } from "../lib"
 
@@ -7,7 +8,6 @@ import { WebxEngine, WebxSession } from "../lib"
 export class WebxSessionWithTimeOut extends WebxSession {
   sessionID: string
   lastActivityTime: number
-  pendings: any[]// Array<HttpRequest | HttpResponse>
   workings: number
   engine: WebxRouter
 
@@ -15,20 +15,7 @@ export class WebxSessionWithTimeOut extends WebxSession {
     super()
     this.sessionID = sessionID
     this.lastActivityTime = Date.now()
-    this.pendings = null
     this.workings = 0
-  }
-  onStartup(data: any) {
-    super.onStartup(data)
-    if (this.pendings) {
-      const pendings = this.pendings
-      this.pendings = null
-      while (pendings.length) {
-        const res = pendings.pop()
-        const req = pendings.pop()
-        this.route(req, res)
-      }
-    }
   }
   checkValidity(time) {
     const inactivityTime = time - this.lastActivityTime
@@ -40,18 +27,11 @@ export class WebxSessionWithTimeOut extends WebxSession {
     }
   }
   route(req, res, next?: Function) {
-    if (this.readyState) {
-      this.workings++
-      this.dispatch(req, res, () => {
-        this.lastActivityTime = Date.now()
-        this.workings--
-      })
-    }
-    else {
-      if (!this.pendings) this.pendings = []
-      this.pendings.push(req)
-      this.pendings.push(res)
-    }
+    this.workings++
+    this.dispatch(req, res, () => {
+      this.lastActivityTime = Date.now()
+      this.workings--
+    })
   }
 }
 
@@ -84,13 +64,19 @@ export class WebxRouter extends WebxEngine {
     process.exit(0)
   }
   route(req, res, next) {
+    const { url } = req
+    const sessionTypeLength = url.indexOf("/", 1)
+    const sessionType = req.url.substring(1, sessionTypeLength)
+    req.url = url.substr(sessionTypeLength)
+
     let session = null
     let sessionID: string = req.cookies["sessionID"]
     session = sessionID && this.sessions[sessionID]
     if (!session) {
-      sessionID = this.generateSessionID()
+      console.log(sessionType)
+      sessionID = sessionType + "-" + this.generateSessionID()
       session = new WebxSessionWithTimeOut(sessionID)
-      session.connect(sessionID, this.options.sessionsConfig, this)
+      session.connect(sessionType, sessionID, this)
       res.cookie("sessionID", sessionID)
       this.sessions[sessionID] = session
     }
@@ -104,6 +90,7 @@ const router = new WebxRouter()
 router.connect(options)
 
 const app = express()
+app.use(cookieParser())
 app.use(router.route.bind(router))
 const server = app.listen(9944, function () {
   const port = server.address().port

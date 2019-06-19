@@ -80,13 +80,13 @@ export class WebxSessionBase {
 export class WebxSession extends WebxSessionBase {
   engine: WebxEngine
 
-  connect(name: string, options: Object, engine: WebxEngine) {
+  connect(type: string, name: string, engine: WebxEngine) {
     if (!this.handle && !this.readyState) {
       this.engine = engine
       this.handle = new addon.WebxSession(
         engine.handle,
+        type,
         name,
-        JSON.stringify(options),
         WebxSession__handleEvent.bind(this)
       )
     }
