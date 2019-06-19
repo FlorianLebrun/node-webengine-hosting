@@ -9,19 +9,20 @@ class WebxEngine;
 class WebxEngineJS;
 class WebxSession;
 
-class WebxEngine : public WebxSessionObjectWrap, public webx::NoAttributs<webx::Releasable<webx::IEngineHost>>
+class WebxEngine : public WebxSessionObjectWrap, public webx::Releasable<webx::IEngineHost>
 {
 public:
   friend WebxEngineJS;
-  webx::Ref<webx::IEngineContext> instance;
+  webx::Ref<webx::IEngine> instance;
 
   WebxEngine(v8::Local<v8::Function> onEvent);
   ~WebxEngine();
 
   void connect(const char *dllPath, const char *dllEntryPoint, const char *config);
   virtual void dispatchDatagram(webx::IDatagram *datagram) override;
-  virtual void notify(webx::IEvent* event) override;
-  virtual bool disconnect() override;
+  virtual void dispatchEvent(webx::IEvent* event) override;
+  virtual bool disconnect(webx::ISession* session) override;
+  virtual bool terminate() override;
   virtual void free() override;
 
   virtual void completeEvents() override;

@@ -9,7 +9,7 @@ class WebxSession;
 class WebxSessionJS;
 class WebxEngine;
 
-class WebxSession : public WebxSessionObjectWrap, public v8h::StringMapBasedAttributs<webx::Releasable<webx::ISessionHost>>
+class WebxSession : public WebxSessionObjectWrap, public webx::Releasable<webx::ISessionHost>
 {
 public:
   friend WebxSessionJS;
@@ -19,9 +19,9 @@ public:
   WebxSession(v8::Local<v8::Function> onEvent);
   ~WebxSession();
 
-  virtual void notify(webx::IEvent* event) override;
+  virtual void dispatchEvent(webx::IEvent* cevent) override;
   virtual void dispatchDatagram(webx::IDatagram *datagram) override;
-  virtual bool disconnect() override;
+  virtual bool disconnect(webx::ISession* session) override;
   virtual void free() override;
 
   virtual void completeEvents() override;

@@ -5,7 +5,7 @@
 
 class WebxSessionObjectWrap : public v8h::ObjectWrap {
 public:
-  webx::Ref<webx::ISessionContext> context;
+  webx::Ref<webx::ISession> context;
   v8h::EventQueue<webx::IEvent> events;
   v8::Persistent<v8::Function> onEvent;
 

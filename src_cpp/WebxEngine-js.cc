@@ -28,8 +28,8 @@ void WebxEngineJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
   if (WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args.Holder())) {
-    const char *name = engine->context->getName();
-    args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
+    std::string name = engine->context->getName();
+    args.GetReturnValue().Set(Nan::New(name).ToLocalChecked());
   }
   else {
     Nan::ThrowError("Cannot get a engine name on a closed engine");

@@ -25,8 +25,8 @@ void WebxSession::completeEvents()
     Local<Function> onEvent = Local<Function>::New(isolate, this->onEvent);
     for (webx::IEvent *ev = events; ev; ev = ev->next)
     {
-      v8h::ObjectVisitor object(ev);
-      Local<Value> argv[] = { Nan::New(ev->eventName()).ToLocalChecked(), object.data };
+      v8::Local<v8::Object> data = v8h::createObjectFromValue(ev);
+      Local<Value> argv[] = { Nan::New(ev->eventName()).ToLocalChecked(), data };
       onEvent->Call(isolate->GetCurrentContext()->Global(), 2, argv);
     }
   }
@@ -41,12 +41,12 @@ void WebxSession::dispatchDatagram(webx::IDatagram *datagram) {
   datagram->discard();
 }
 
-void WebxSession::notify(webx::IEvent *event)
+void WebxSession::dispatchEvent(webx::IEvent *event)
 {
   this->events.push(event);
 }
 
-bool WebxSession::disconnect()
+bool WebxSession::disconnect(webx::ISession* session)
 {
   this->context = 0;
   this->events.complete();

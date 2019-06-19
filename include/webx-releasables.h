@@ -7,9 +7,9 @@
 #include <string>
 #include <atomic>
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 #define _RELEASABLE_DEBUG
-#endif
+//#endif
 
 namespace webx
 {
@@ -93,29 +93,38 @@ namespace webx
     {
 #ifdef _RELEASABLE_DEBUG
       _s_object_count++;
-      //printf("(+) %s %d\n", typeid(CReleasable).name(), (int)_s_object_count);
-      if (_s_object_count > 20) {
-        printf("(!) leak %s %d\n", typeid(CReleasable).name(), (int)_s_object_count);
+      if (_s_object_count > 10) {
+        printf("(new) %.X : %s\n", this, typeid(this).name());
       }
 #endif
     }
     virtual void retain() override
     {
       this->nref++;
+#ifdef _RELEASABLE_DEBUG
+      if (_s_object_count > 10) {
+        printf("(retain) %.X %d : %s\n", this, this->nref.load(), typeid(this).name());
+      }
+#endif
     }
     virtual void release() override
     {
-      if ((--this->nref) <= 0) {
 #ifdef _RELEASABLE_DEBUG
+      if ((--this->nref) <= 0) {
         _s_object_count--;
-        //printf("(-) %s %d\n", typeid(CReleasable).name(), (int)_s_object_count);
         if (this->nref < 0) {
-          printf("(!) crash risk on %s\n", typeid(CReleasable).name());
+          printf("(!) crash risk on %s\n", typeid(this).name());
         }
-#else
-        this->free();
-#endif
       }
+      if (_s_object_count > 10) {
+        if(this->nref) printf("<release> %.X %d : %s\n", this, this->nref.load(), typeid(this).name());
+        else printf("<delete> %.X : %s\n", this, this->nref.load(), typeid(this).name());
+      }
+#else
+      if ((--this->nref) <= 0) {
+        this->free();
+      }
+#endif
     }
     virtual void free() = 0;
   };

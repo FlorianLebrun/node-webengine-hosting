@@ -9,6 +9,8 @@
 #include "../include/webx.h"
 #include "./spinlock.h"
 
+#pragma error (disable : 145)
+
 #define TRACE_LEAK(x) //x
 
 namespace v8h
@@ -133,35 +135,14 @@ namespace v8h
     }
   };
 
-  class ObjectVisitor : public webx::IAttributsVisitor
-  {
-  public:
-    v8::Local<v8::Object> data;
+  inline v8::Local<v8::Object> createObjectFromValue(webx::IValue* value) {
+    v8::Local<v8::Object> data(Nan::New<v8::Object>());
+    value->foreach([&data](const webx::IValue& key, const webx::IValue& value) {
+      data->Set(Nan::New(key.toString()).ToLocalChecked(), Nan::New(key.toString()).ToLocalChecked());
+    });
+    return data;
+  }
 
-    ObjectVisitor(webx::IAttributs *notification)
-      : data(Nan::New<v8::Object>())
-    {
-      notification->visitAttributs(this);
-    }
-    virtual void visit(const char *name, webx::AttributValue value) override
-    {
-      this->data->Set(Nan::New(name).ToLocalChecked(), Nan::New(value.getStringPtr(), value.getStringLen()).ToLocalChecked());
-    }
-  };
-
-  template <class T>
-  class StringMapBasedAttributs : public webx::StringMapBasedAttributs<T, webx::CaseInsensitive>
-  {
-  public:
-    void setAttributStringV8(v8::Local<v8::Value> name, v8::Local<v8::Value> value)
-    {
-      this->attributs[GetUtf8(name)] = GetUtf8(value);
-    }
-    void setAttributStringV8(const char *name, v8::Local<v8::Value> value)
-    {
-      this->attributs[name] = GetUtf8(value);
-    }
-  };
 } // namespace v8h
 
 #endif

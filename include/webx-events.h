@@ -6,28 +6,28 @@
 
 namespace webx
 {
-  // Events ID
-  static const int undefinedEventID = 0;
-  static const int dataEventID = 1;
-
   // Event queue
   template <class CEvent>
   class EventQueue;
 
   // Interface of event
-  class IEvent : public IAttributs
+  class IEvent : public IReleasable, public IValue
   {
   public:
     webx::Ref<IEvent> next;
-    virtual int eventID() { return undefinedEventID; }
-    virtual const char *eventName() { return "undefined"; }
+    virtual tTypeId getTypeId() const {
+      return tTypeId::mapId;
+    }
+    virtual const char *eventName() { 
+      return "message"; 
+    }
   };
 
   // -------------------------------------------------
   // Implementations
   // -------------------------------------------------
   template <class CEvent>
-  class BuiltinEvent : public BuiltinAttributs<Releasable<CEvent>> {
+  class BuiltinEvent : public Releasable<CEvent> {
 
   };
 

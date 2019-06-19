@@ -1,20 +1,33 @@
 #include "./WebxHttpTransaction.h"
 
-TRACE_LEAK(static std::atomic<intptr_t> leakcount = 0);
-
-struct ResponseData : public webx::IAttributsVisitor
+struct ResponseData 
 {
   int statusCode;
   v8::Local<v8::Object> headers;
   v8::Local<v8::Value> buffer;
 
-  ResponseData(webx::IDatagram* response, v8h::EventQueue<webx::IData>& responseData)
+  ResponseData(webx::IDatagram* response)
     : statusCode(0), headers(Nan::New<v8::Object>())
   {
     char* buffer;
     uint32_t size;
-    response->visitAttributs(this);
-    if (webx::Ref<webx::IData> data = responseData.flush())
+    if (webx::IValue* responseAttributs = response->getAttributs()) {
+      responseAttributs->foreach([this](const webx::IValue& key, const webx::IValue& value) {
+        std::string name = key.toString();
+        if (name[0] == ':') {
+          if (!stricmp(name.c_str(), ":status")) {
+            this->statusCode = value.toInteger();
+          }
+        }
+        else {
+          this->headers->Set(Nan::New(name).ToLocalChecked(), Nan::New(value.toString()).ToLocalChecked());
+        }
+      });
+    }
+
+    webx::Ref<webx::IData> data;
+    data.New(response->pullData());
+    if (data)
     {
       if (data->getData(buffer, size)) {
         this->buffer = node::Buffer::Copy(v8::Isolate::GetCurrent(), buffer, size).ToLocalChecked();
@@ -22,17 +35,6 @@ struct ResponseData : public webx::IAttributsVisitor
       if(data->next) {
         throw "Transfert-Encoding 'chunked' is not well supported.";
       }
-    }
-  }
-  virtual void visit(const char *name, webx::AttributValue value) override
-  {
-    if (name[0] == ':') {
-      if (!stricmp(name, ":status")) {
-        this->statusCode = value.toInt();
-      }
-    }
-    else {
-      this->headers->Set(Nan::New(name).ToLocalChecked(), Nan::New(value.getStringPtr(), value.getStringLen()).ToLocalChecked());
     }
   }
 };
@@ -50,11 +52,11 @@ WebxHttpTransaction::WebxHttpTransaction(
   this->onEndCallback.Reset(Isolate::GetCurrent(), onEnd);
 
   // Set request pseudo headers
-  this->setAttributStringV8(":method", v8h::GetIn(req, "method"));
-  this->setAttributStringV8(":path", v8h::GetIn(req, "url"));
-  this->setAttributStringV8(":scheme", v8h::GetIn(req, "protocole"));
-  this->setAttributStringV8(":authority", v8h::GetIn(req, "hostname"));
-  this->setAttributStringV8(":original-path", v8h::GetIn(req, "originalUrl"));
+  this->requestAttributs.values[":method"] = v8h::GetUtf8(v8h::GetIn(req, "method"));
+  this->requestAttributs.values[":path"] = v8h::GetUtf8(v8h::GetIn(req, "url"));
+  this->requestAttributs.values[":scheme"] = v8h::GetUtf8(v8h::GetIn(req, "protocole"));
+  this->requestAttributs.values[":authority"] = v8h::GetUtf8(v8h::GetIn(req, "hostname"));
+  this->requestAttributs.values[":original-path"] = v8h::GetUtf8(v8h::GetIn(req, "originalUrl"));
 
   // Set request headers
   Local<Object> headers = v8h::GetIn(req, "headers")->ToObject();
@@ -62,7 +64,7 @@ WebxHttpTransaction::WebxHttpTransaction(
   for (uint32_t i = 0; i < keys->Length(); i++)
   {
     Local<Value> key = keys->Get(i);
-    this->setAttributStringV8(key, headers->Get(key));
+    this->requestAttributs.values[v8h::GetUtf8(key)] = v8h::GetUtf8(headers->Get(key));
   }
   TRACE_LEAK(printf("<WebxHttpTransaction %d>\n", int(++leakcount)));
 }
@@ -86,6 +88,11 @@ bool WebxHttpTransaction::accept(webx::IDatagramHandler *handler)
   return true;
 }
 
+void WebxHttpTransaction::discard()
+{
+  throw;
+}
+
 bool WebxHttpTransaction::send(webx::IDatagram* response)
 {
   if (!this->response && response->accept(this)) {
@@ -97,7 +104,6 @@ bool WebxHttpTransaction::send(webx::IDatagram* response)
 
 void WebxHttpTransaction::onData(webx::IDatagram* from)
 {
-  this->responseData.push_idle(from->pullData());
 }
 
 void WebxHttpTransaction::onComplete(webx::IDatagram* from)
@@ -117,7 +123,7 @@ void WebxHttpTransaction::completeEvents() {
 
   // Write the response stream
   Local<Function> onSend = Local<Function>::New(isolate, this->onSendCallback);
-  ResponseData response(this->response, this->responseData);
+  ResponseData response(this->response);
   Local<Value> argv[] = {
     /*status*/ Nan::New(response.statusCode),
     /*headers*/ response.headers,

@@ -96,10 +96,9 @@ export class WebxSession extends WebxSessionBase {
 
 export class WebxEngine extends WebxSessionBase {
   options: any
-  
+
   connect(options) {
     if (!this.handle && !this.readyState) {
-      const config = options.config ? JSON.stringify(options.config) : ""
       this.options = options
 
       // Update process environement
@@ -107,12 +106,15 @@ export class WebxEngine extends WebxSessionBase {
       for (const key in options.envs) {
         process.env[key] = options.envs[key]
       }
+      if (Array.isArray(options.paths)) {
+        process.env["PATH"] = process.env["PATH"] + ";" + options.paths.join(";")
+      }
 
       // Open engine
       this.handle = new addon.WebxEngine(
-        options.dll.path,
-        options.dll.entryName,
-        config,
+        options.entrypoint.module,
+        options.entrypoint.name,
+        options.configuration ? JSON.stringify(options.configuration) : "{}",
         WebxEngine__handleEvent.bind(this)
       )
 

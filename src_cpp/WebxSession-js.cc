@@ -7,17 +7,17 @@ typedef v8::String::Utf8Value Utf8Value;
 void WebxSessionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
-  if (args.Length() != 4 || !args[0]->IsObject() || !args[1]->IsString() || !args[2]->IsString() || !args[3]->IsFunction())
+  if (args.Length() != 4 || !args[0]->IsString() || !args[1]->IsString() || !args[2]->IsObject() || !args[3]->IsFunction())
     Nan::ThrowTypeError("Wrong arguments");
   if (!args.IsConstructCall())
     Nan::ThrowError("Is not a function");
 
-  if (WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args[0]->ToObject())) {
+  if (WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args[2]->ToObject())) {
     Local<String> name = args[1].As<v8::String>();
-    Local<String> config = args[2].As<v8::String>();
+    Local<String> type = args[2].As<v8::String>();
 
     WebxSession *session = new WebxSession(args[3].As<v8::Function>());
-    session->context = engine->instance->createSession(session, *Utf8Value(name), *Utf8Value(config));
+    session->context = engine->instance->createSession(*Utf8Value(type), *Utf8Value(name), session);
     session->AttachObject(args.This());
 
     args.GetReturnValue().Set(args.This());
@@ -32,8 +32,8 @@ void WebxSessionJS::getName(const Nan::FunctionCallbackInfo<v8::Value> &args)
   using namespace v8;
   if (WebxSession *session = WebxSession::Unwrap<WebxSession>(args.Holder())) {
     if (session->context) {
-      const char *name = session->context->getName();
-      args.GetReturnValue().Set(String::NewFromUtf8(Isolate::GetCurrent(), name));
+      std::string name = session->context->getName();
+      args.GetReturnValue().Set(Nan::New(name).ToLocalChecked());
     }
   }
   else {

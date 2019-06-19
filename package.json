@@ -26,7 +26,7 @@
     "typescript": "^3.4.1"
   },
   "scripts": {
-    "start": "node ./scripts/launch-monitor ./.build/lib",
+    "start": "node ./scripts/launch-monitor ./.build/__test__",
     "update": "tsc -w",
     "build": "node-gyp rebuild && node ./scripts/build",
     "build:cpp": "node-gyp rebuild",

@@ -6,12 +6,7 @@ var baseDir = process.cwd()
 var std_require = Module.prototype.require
 Module.prototype.require = function (path) {
   console.assert(arguments.length === 1)
-  try {
-    return std_require.call(this, path)
-  }
-  catch (e) {
-    throw new Error(e.message)
-  }
+  return std_require.call(this, path)
 }
 
 try {

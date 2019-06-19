@@ -8,13 +8,14 @@ class WebxHttpTransaction;
 class WebxHttpTransactionJS;
 
 class WebxHttpTransaction : public v8h::ObjectWrap, 
-  public v8h::StringMapBasedAttributs<webx::Releasable<webx::IDatagram>>, 
+  public webx::Releasable<webx::IDatagram>, 
   public webx::IDatagramHandler
 {
 public:
   friend WebxHttpTransactionJS;
 
   webx::IDatagramHandler* requestHandler;
+  webx::StringMapValue requestAttributs;
   webx::DataQueue requestData;
 
   webx::Ref<webx::IDatagram> response;
@@ -33,6 +34,10 @@ public:
   ~WebxHttpTransaction();
 
   virtual bool accept(webx::IDatagramHandler *handler) override;
+  virtual void discard() override;
+
+  virtual webx::IValue* getAttributs() { return &this->requestAttributs; }
+
   virtual bool send(webx::IDatagram *response) override;
   virtual webx::tIOStatus getStatus() override {return this->requestStatus;}
   virtual webx::IData* pullData() override { return 0; }

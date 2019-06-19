@@ -17,3 +17,4 @@ intl/messages.json
 .output
 .build
 package-lock.json
+webx.options.json

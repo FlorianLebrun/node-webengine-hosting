@@ -30,17 +30,18 @@ namespace webx
     tIOStatus(int flags = 0) {this->flags = flags;}
   };
 
-  class IDatagram : public IAttributs
+  class IDatagram : public IReleasable
   {
   public:
     // API for receiving
     virtual bool accept(IDatagramHandler *handler) = 0;
-    virtual void discard() {}
+    virtual void discard() = 0;
 
     // API for sending
     virtual bool send(IDatagram* response) {return false;}
 
     // API for incoming datas
+    virtual IValue* getAttributs() = 0;
     virtual tIOStatus getStatus() = 0;
     virtual IData* pullData() = 0;
     virtual IDatagram* pullAttachment() {return 0;}
@@ -55,9 +56,10 @@ namespace webx
     virtual void disconnect() = 0;
   };
   
-  class IDatagramListener : public IAttributs
+  class IDatagramListener : public IReleasable
   {
   public:
+    virtual IValue* getAttributs() = 0;
     virtual void onDatagram(IDatagram* datagram) = 0;
   };
   

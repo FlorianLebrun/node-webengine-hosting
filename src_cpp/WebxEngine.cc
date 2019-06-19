@@ -1,17 +1,12 @@
 #include "./WebxEngine.h"
 
-TRACE_LEAK(static std::atomic<intptr_t> leakcount = 0);
-
 WebxEngine::WebxEngine(v8::Local<v8::Function> onEvent)
   : WebxSessionObjectWrap(onEvent)
 {
-  this->instance = 0;
-  TRACE_LEAK(printf("<WebxEngine %d>\n", int(++leakcount)));
 }
 
 WebxEngine::~WebxEngine()
 {
-  TRACE_LEAK(printf("<WebxEngine %d>\n", int(--leakcount)));
 }
 
 void WebxEngine::completeEvents()
@@ -25,8 +20,8 @@ void WebxEngine::completeEvents()
     Local<Function> onEvent = Local<Function>::New(isolate, this->onEvent);
     for (webx::IEvent *ev = events; ev; ev = ev->next)
     {
-      v8h::ObjectVisitor object(ev);
-      Local<Value> argv[] = { Nan::New(ev->eventName()).ToLocalChecked(), object.data };
+      v8::Local<v8::Object> data = v8h::createObjectFromValue(ev);
+      Local<Value> argv[] = { Nan::New(ev->eventName()).ToLocalChecked(), data };
       onEvent->Call(isolate->GetCurrentContext()->Global(), 2, argv);
     }
   }
@@ -52,14 +47,22 @@ void WebxEngine::connect(const char *dllPath, const char *dllEntryPoint, const c
     else
     {
       char msg[512];
-      sprintf_s(msg, sizeof(msg), "Error (%d) at GetProcAddress: Dll entryPoint is not found)", GetLastError());
+      sprintf_s(msg, sizeof(msg), 
+        "Error (%d) at GetProcAddress: Dll entryPoint '%s' is not found)",
+        GetLastError(),
+        dllEntryPoint
+      );
       Nan::ThrowError("Dll entryPoint is not found");
     }
   }
   else
   {
     char msg[512];
-    sprintf_s(msg, sizeof(msg), "Error (%d) at LoadLibraryA: Dll cannot be load (module or its dependencies may be invalid or unreachable)", GetLastError());
+    sprintf_s(msg, sizeof(msg),
+      "Error (%d) at LoadLibraryA: Dll cannot be load (module or its dependencies may be invalid or unreachable) at '%s'", 
+      GetLastError(),
+      dllPath
+    );
     Nan::ThrowError(msg);
   }
 }
@@ -69,18 +72,23 @@ void WebxEngine::dispatchDatagram(webx::IDatagram *datagram) {
   datagram->discard();
 }
 
-void WebxEngine::notify(webx::IEvent *event)
+void WebxEngine::dispatchEvent(webx::IEvent *event)
 {
   this->events.push(event);
 }
+
 void WebxEngine::free() {
   delete this;
 }
 
-
-bool WebxEngine::disconnect()
+bool WebxEngine::disconnect(webx::ISession* session)
 {
   this->context = 0;
   this->events.complete();
   return true;
+}
+
+bool WebxEngine::terminate() 
+{
+  return false;
 }

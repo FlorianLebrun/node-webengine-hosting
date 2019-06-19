@@ -3,6 +3,7 @@
     {
       "target_name": "addon",
       "sources": [
+        "include/webx.cpp",
         "src_cpp/addon.cc",
         "src_cpp/spinlock.cpp",
         "src_cpp/WebxSessionObjectWrap.cc",
