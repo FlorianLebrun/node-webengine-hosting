@@ -69,18 +69,26 @@ export class WebxRouter extends WebxEngine {
     const sessionType = req.url.substring(1, sessionTypeLength)
     req.url = url.substr(sessionTypeLength)
 
-    let session = null
-    let sessionID: string = req.cookies["sessionID"]
-    session = sessionID && this.sessions[sessionID]
-    if (!session) {
-      console.log(sessionType)
-      sessionID = sessionType + "-" + this.generateSessionID()
-      session = new WebxSessionWithTimeOut(sessionID)
-      session.connect(sessionType, sessionID, this)
-      res.cookie("sessionID", sessionID)
-      this.sessions[sessionID] = session
+    if (sessionType === "admin") {
+      this.dispatch(req, res, next)
     }
-    session.route(req, res, next)
+    else if (options.configuration.sessions[sessionType]) {
+      const cookieName = "SID-" + sessionType
+      let session = null
+      let sessionID: string = req.cookies[cookieName]
+      session = sessionID && this.sessions[sessionID]
+      if (!session) {
+        sessionID = sessionType + "-" + this.generateSessionID()
+        session = new WebxSessionWithTimeOut(sessionID)
+        session.connect(sessionType, sessionID, this)
+        res.cookie(cookieName, sessionID)
+        this.sessions[sessionID] = session
+      }
+      session.route(req, res, next)
+    }
+    else {
+      next()
+    }
   }
 }
 

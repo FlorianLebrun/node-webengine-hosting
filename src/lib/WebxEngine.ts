@@ -14,66 +14,33 @@ export class WebxSessionBase {
     else throw new Error("WebxSession.disconnect invalid")
   }
   onStartup(data: any) {
-    debug.info(`[${this.name}] Session.startup`)
+    debug.info(`\n[${this.name}] Session.startup`)
   }
   onEvent(type: string, data: any) {
-    debug.title(`[${this.name}] ${type} ${(data && JSON.stringify(data)) || ""}`)
+    debug.success(`\n[event] ${type}     -- on '${this.name}'`)
   }
   onTerminate(data: any) {
-    debug.info(`[${this.name}] Session.exit`)
+    debug.info(`\n[${this.name}] Session.exit`)
   }
   dispatch(req, res, callback) {
-    if (req.upgrade) {
-      const stream = new addon.WebxWebSocketStream(this.handle, req, (data) => {
-        const ws = res.accept()
-        ws.send("hello in here")
-
-        ws.on("message", (msg) => {
-          //ws.send("recv: " + msg)
-          stream.write(msg)
-        })
-
-        ws.on("close", () => {
-          stream.close()
-          console.log("WebSocket closed")
-        })
-
-        stream.on("message", (data) => {
-          console.log("server send", data)
-          ws.send(data)
-        })
-
-        stream.on("close", (data) => {
-          callback && callback()
-          ws.close()
-          console.log("WebSocket closed by server")
-        })
-
-      }, (code) => {
-        res.status(code).reject()
-      })
-
-    }
-    else {
-      const transaction = new addon.WebxHttpTransaction(this.handle, req,
-        function handleSend(status, headers, buffer) {
-          res.set(headers).status(status).send(buffer)
-        },
-        function handleChunk(bufferOut) {
-          res.write(bufferOut)
-        },
-        function handleEnd() {
-          res.end()
-          callback && callback()
-        }
-      )
-      req.on("data", function handleChunk(bufferIn) {
-        transaction.write(bufferIn)
-      })
-      req.on("end", function handleEnd() {
-        transaction.close()
-      })
-    }
+    const transaction = new addon.WebxHttpTransaction(this.handle, req,
+      function handleSend(status, headers, buffer) {
+        res.set(headers).status(status).send(buffer)
+      },
+      function handleChunk(bufferOut) {
+        res.write(bufferOut)
+      },
+      function handleEnd() {
+        res.end()
+        callback && callback()
+      }
+    )
+    req.on("data", function handleChunk(bufferIn) {
+      transaction.write(bufferIn)
+    })
+    req.on("end", function handleEnd() {
+      transaction.close()
+    })
   }
 }
 
@@ -83,6 +50,7 @@ export class WebxSession extends WebxSessionBase {
   connect(type: string, name: string, engine: WebxEngine) {
     if (!this.handle && !this.readyState) {
       this.engine = engine
+      this.name = name
       this.handle = new addon.WebxSession(
         engine.handle,
         type,
@@ -100,6 +68,7 @@ export class WebxEngine extends WebxSessionBase {
   connect(options) {
     if (!this.handle && !this.readyState) {
       this.options = options
+      this.name = options.name || "admin"
 
       // Update process environement
       options.cd && process.chdir(options.cd)
@@ -114,7 +83,7 @@ export class WebxEngine extends WebxSessionBase {
       this.handle = new addon.WebxEngine(
         options.entrypoint.module,
         options.entrypoint.name,
-        options.configuration ? JSON.stringify(options.configuration) : "{}",
+        options.configuration ? JSON.stringify(options.configuration, null, 2) : "{}",
         WebxEngine__handleEvent.bind(this)
       )
 
@@ -135,11 +104,11 @@ export class WebxEngine extends WebxSessionBase {
 
 function WebxSession__handleEvent(type: string, data: any) {
   switch (type) {
-    case "Session.startup":
+    case "/runtime/session/startup":
       this.readyState = true
       this.name = this.handle.getName()
       return this.onStartup(data)
-    case "Session.exit":
+    case "/runtime/session/exit":
       this.readyState = false
       return this.onTerminate(data)
     default:
@@ -149,9 +118,9 @@ function WebxSession__handleEvent(type: string, data: any) {
 
 function WebxEngine__handleEvent(type: string, data: any) {
   switch (type) {
-    case "Runtime.startup":
+    case "/runtime/startup":
       return this.onRuntimeStartup(data)
-    case "Runtime.exit":
+    case "/runtime/exit":
       this.readyState = false
       this.handle = null
       return this.onRuntimeTerminate(data)

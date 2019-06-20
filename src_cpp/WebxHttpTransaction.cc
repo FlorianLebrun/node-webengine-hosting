@@ -95,9 +95,9 @@ void WebxHttpTransaction::discard()
 
 bool WebxHttpTransaction::send(webx::IDatagram* response)
 {
-  if (!this->response && response->accept(this)) {
+  if (!this->response) {
     this->response = response;
-    return true;
+    return response->accept(this);
   }
   return false;
 }
@@ -123,13 +123,22 @@ void WebxHttpTransaction::completeEvents() {
 
   // Write the response stream
   Local<Function> onSend = Local<Function>::New(isolate, this->onSendCallback);
-  ResponseData response(this->response);
-  Local<Value> argv[] = {
-    /*status*/ Nan::New(response.statusCode),
-    /*headers*/ response.headers,
-    /*buffer*/ response.buffer,
-  };
-  onSend->Call(isolate->GetCurrentContext()->Global(), 3, argv);
+  if (this->response) {
+    ResponseData response(this->response);
+    Local<Value> argv[] = {
+      /*status*/ Nan::New(response.statusCode),
+      /*headers*/ response.headers,
+      /*buffer*/ response.buffer,
+    };
+    onSend->Call(isolate->GetCurrentContext()->Global(), 3, argv);
+  }
+  else {
+    Local<Value> argv[] = {
+      /*status*/ Nan::New(404),
+      /*headers*/ Nan::New<v8::Object>(),
+    };
+    onSend->Call(isolate->GetCurrentContext()->Global(), 2, argv);
+  }
 
   // Close the response stream
   if (this->responseData.is_completed()) {

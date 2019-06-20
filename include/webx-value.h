@@ -43,18 +43,15 @@ namespace webx {
       value.ptr = 0;
     }
     String(const char* value) {
-      printf("New %s\n", value);
       this->ptr = _strdup(value);
       this->pfree = ::free;
     }
     String(std::string value) {
-      printf("New %s\n", value.c_str());
       this->ptr = _strdup(value.c_str());
       this->pfree = ::free;
     }
     ~String() {
       if (this->ptr) {
-        printf("Free %s\n", this->ptr);
         this->pfree(this->ptr);
       }
     }
@@ -65,19 +62,15 @@ namespace webx {
     }
     void operator = (const char* value) {
       if (this->ptr) {
-        printf("Free %s\n", this->ptr);
         this->pfree(this->ptr);
       }
-      printf("New %s\n", value);
       this->ptr = _strdup(value);
       this->pfree = ::free;
     }
     void operator = (std::string value) {
       if (this->ptr) {
-        printf("Free %s\n", this->ptr);
         this->pfree(this->ptr);
       }
-      printf("New %s\n", value.c_str());
       this->ptr = _strdup(value.c_str());
       this->pfree = ::free;
     }
