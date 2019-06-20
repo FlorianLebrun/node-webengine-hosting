@@ -37,11 +37,10 @@ void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
 
     if (webx::IData *data = v8h::NewDataFromValue(args[0]))
     {
-      if (transaction->requestHandler)
-      {
+      transaction->requestData.push(data);
+      if (transaction->requestHandler) {
         transaction->requestHandler->onData(transaction);
       }
-      else printf(">>> Lost chunk\n");
       data->release();
       args.GetReturnValue().Set(true);
     }

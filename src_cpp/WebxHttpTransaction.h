@@ -40,7 +40,7 @@ public:
 
   virtual bool send(webx::IDatagram *response) override;
   virtual webx::tIOStatus getStatus() override {return this->requestStatus;}
-  virtual webx::IData* pullData() override { return 0; }
+  virtual webx::IData* pullData() override;
   virtual webx::IDatagram* pullAttachment() override { return 0; }
   virtual void free() override;
 

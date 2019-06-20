@@ -102,6 +102,10 @@ bool WebxHttpTransaction::send(webx::IDatagram* response)
   return false;
 }
 
+webx::IData* WebxHttpTransaction::pullData() {
+  return this->requestData.flush();
+}
+
 void WebxHttpTransaction::onData(webx::IDatagram* from)
 {
 }
