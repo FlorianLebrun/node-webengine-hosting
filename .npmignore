@@ -1,9 +1,5 @@
-!/dist
-!/build
-/src
-/src_cpp
-/.vscode
-/public
-
-/examples
-/node_project
+*
+!/dist/**
+!/include
+!/LICENSE
+!/README.md

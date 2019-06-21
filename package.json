@@ -1,17 +1,12 @@
 {
   "name": "node-webengine-hosting",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "main": "dist/index.js",
   "private": true,
   "gypfile": false,
-  "dependencies": {
-    "bindings": "~1.2.1",
-    "http-proxy": "^1.17.0",
-    "nan": "^2.0.0",
-    "ws": "^5.1.1"
-  },
   "devDependencies": {
     "@types/node": "^11.11.3",
+    "typescript": "^3.4.1",
     "body-parser": "^1.18.2",
     "cookie-parser": "^1.4.3",
     "detect-indent": "^5.0.0",
@@ -24,7 +19,10 @@
     "rollup-plugin-babel-minify": "^8.0.0",
     "rollup-plugin-typescript": "^1.0.0",
     "tslib": "1.9.3",
-    "typescript": "^3.4.1"
+    "bindings": "~1.2.1",
+    "http-proxy": "^1.17.0",
+    "nan": "^2.0.0",
+    "ws": "^5.1.1"
   },
   "scripts": {
     "start": "node ./scripts/launch-monitor ./.build/__test__",

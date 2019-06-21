@@ -92,7 +92,6 @@ export class WebxRouter extends WebxEngine {
   }
 }
 
-console.log("hello")
 const options = fs.readJsonSync("./webx.options.json")
 const router = new WebxRouter()
 router.connect(options)
