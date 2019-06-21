@@ -37,11 +37,7 @@ void WebxHttpTransactionJS::write(const Nan::FunctionCallbackInfo<v8::Value> &ar
 
     if (webx::IData *data = v8h::NewDataFromValue(args[0]))
     {
-      transaction->requestData.push(data);
-      if (transaction->requestHandler) {
-        transaction->requestHandler->onData(transaction);
-      }
-      data->release();
+      transaction->writeRequestData(data);
       args.GetReturnValue().Set(true);
     }
     else
@@ -57,11 +53,7 @@ void WebxHttpTransactionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &ar
 {
   using namespace v8;
   if (WebxHttpTransaction *transaction = WebxHttpTransaction::Unwrap<WebxHttpTransaction>(args.Holder())) {
-    if (transaction->requestHandler) {
-      transaction->requestStatus.data_end = 1;
-      transaction->requestHandler->onComplete(transaction);
-      transaction->requestHandler = 0;
-    }
+    transaction->endRequestData();
     args.GetReturnValue().Set(true);
   }
   else {

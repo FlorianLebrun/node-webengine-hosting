@@ -1,7 +1,38 @@
+#include "./webx-releasables.h"
 #include "./webx-value.h"
 #include <iostream>
+#include <unordered_map>
+#include <mutex>
 
 using namespace webx;
+
+#ifdef _RELEASABLE_DEBUG
+static std::unordered_map<size_t, int> _s_object_counts;
+static std::mutex _s_object_counts_lock;
+
+int webx::_report_releasable_count(const type_info& infos) {
+  int count = 0;
+  _s_object_counts_lock.lock();
+  count = _s_object_counts[infos.hash_code()];
+  _s_object_counts_lock.unlock();
+  return count;
+}
+int webx::_report_releasable_new(const type_info& infos) {
+  int count = 0;
+  _s_object_counts_lock.lock();
+  count = ++_s_object_counts[infos.hash_code()];
+  _s_object_counts_lock.unlock();
+  return count;
+}
+int webx::_report_releasable_delete(const type_info& infos) {
+  int count = 0;
+  _s_object_counts_lock.lock();
+  count = --_s_object_counts[infos.hash_code()];
+  _s_object_counts_lock.unlock();
+  return count;
+}
+
+#endif
 
 IValue IValue::Undefined;
 NullValue IValue::Null;

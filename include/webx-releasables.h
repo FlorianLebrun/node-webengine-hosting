@@ -7,9 +7,9 @@
 #include <string>
 #include <atomic>
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
 #define _RELEASABLE_DEBUG
-//#endif
+#endif
 
 namespace webx
 {
@@ -80,10 +80,12 @@ namespace webx
   }
 
 #ifdef _RELEASABLE_DEBUG
-  static std::atomic<int> _s_object_count;
+  int _report_releasable_count(const type_info& infos);
+  int _report_releasable_new(const type_info& infos);
+  int _report_releasable_delete(const type_info& infos);
 #endif
 
-  template <class CReleasable>
+  template <class CReleasable, class CClass = CReleasable>
   class Releasable : public CReleasable
   {
   public:
@@ -92,9 +94,8 @@ namespace webx
     Releasable() : nref(1)
     {
 #ifdef _RELEASABLE_DEBUG
-      _s_object_count++;
-      if (_s_object_count > 10) {
-        printf("(new) %.X : %s\n", this, typeid(this).name());
+      if (_report_releasable_new(typeid(CClass)) > 10) {
+        printf("(new) %.X : %s\n", this, typeid(CClass).name());
       }
 #endif
     }
@@ -102,8 +103,8 @@ namespace webx
     {
       this->nref++;
 #ifdef _RELEASABLE_DEBUG
-      if (_s_object_count > 10) {
-        printf("(retain) %.X %d : %s\n", this, this->nref.load(), typeid(this).name());
+      if (_report_releasable_count(typeid(CClass)) > 10) {
+        printf("(retain) %.X %d : %s\n", this, this->nref.load(), typeid(CClass).name());
       }
 #endif
     }
@@ -111,14 +112,14 @@ namespace webx
     {
 #ifdef _RELEASABLE_DEBUG
       if ((--this->nref) <= 0) {
-        _s_object_count--;
+        _report_releasable_delete(typeid(CClass));
         if (this->nref < 0) {
-          printf("(!) crash risk on %s\n", typeid(this).name());
+          printf("(!) crash risk on %s\n", typeid(CClass).name());
         }
       }
-      if (_s_object_count > 10) {
-        if(this->nref) printf("<release> %.X %d : %s\n", this, this->nref.load(), typeid(this).name());
-        else printf("<delete> %.X : %s\n", this, this->nref.load(), typeid(this).name());
+      if (_report_releasable_count(typeid(CClass)) > 10) {
+        if(this->nref) printf("<release> %.X %d : %s\n", this, this->nref.load(), typeid(CClass).name());
+        else printf("<delete> %.X : %s\n", this, this->nref.load(), typeid(CClass).name());
       }
 #else
       if ((--this->nref) <= 0) {

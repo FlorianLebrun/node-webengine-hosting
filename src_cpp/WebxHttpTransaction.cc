@@ -1,6 +1,6 @@
 #include "./WebxHttpTransaction.h"
 
-struct ResponseData 
+struct ResponseData
 {
   int statusCode;
   v8::Local<v8::Object> headers;
@@ -32,7 +32,7 @@ struct ResponseData
       if (data->getData(buffer, size)) {
         this->buffer = node::Buffer::Copy(v8::Isolate::GetCurrent(), buffer, size).ToLocalChecked();
       }
-      if(data->next) {
+      if (data->next) {
         throw "Transfert-Encoding 'chunked' is not well supported.";
       }
     }
@@ -93,13 +93,33 @@ void WebxHttpTransaction::discard()
   throw;
 }
 
+void WebxHttpTransaction::writeRequestData(webx::IData *data) {
+  this->requestData.push(data);
+  if (this->requestHandler) {
+    this->requestHandler->onData(this);
+  }
+  data->release();
+}
+
+void WebxHttpTransaction::endRequestData() {
+  if (this->requestHandler) {
+    this->requestStatus.data_end = 1;
+    this->requestHandler->onComplete(this);
+    this->requestHandler->disconnect();
+    this->requestHandler = 0;
+  }
+}
+
 bool WebxHttpTransaction::send(webx::IDatagram* response)
 {
   if (!this->response) {
     this->response = response;
     return response->accept(this);
   }
-  return false;
+  else {
+    response->discard();
+    return false;
+  }
 }
 
 webx::IData* WebxHttpTransaction::pullData() {
@@ -125,6 +145,12 @@ void WebxHttpTransaction::completeEvents() {
   Isolate *isolate = Isolate::GetCurrent();
   HandleScope scope(isolate);
 
+  // Release request handler
+  if (this->requestHandler) {
+    this->requestHandler->disconnect();
+    this->requestHandler = 0;
+  }
+
   // Write the response stream
   Local<Function> onSend = Local<Function>::New(isolate, this->onSendCallback);
   if (this->response) {
@@ -135,6 +161,7 @@ void WebxHttpTransaction::completeEvents() {
       /*buffer*/ response.buffer,
     };
     onSend->Call(isolate->GetCurrentContext()->Global(), 3, argv);
+    this->response = 0;
   }
   else {
     Local<Value> argv[] = {
@@ -156,5 +183,5 @@ void WebxHttpTransaction::completeEvents() {
 void WebxHttpTransaction::free()
 {
   _ASSERT(!this->responseData.flush());
-  //delete this; // Crash with vs2012 debugger
+  delete this; // Crash with vs2012 debugger
 }

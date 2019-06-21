@@ -9,7 +9,7 @@ class WebxEngine;
 class WebxEngineJS;
 class WebxSession;
 
-class WebxEngine : public WebxSessionObjectWrap, public webx::Releasable<webx::IEngineHost>
+class WebxEngine : public WebxSessionObjectWrap, public webx::Releasable<webx::IEngineHost, WebxEngine>
 {
 public:
   friend WebxEngineJS;

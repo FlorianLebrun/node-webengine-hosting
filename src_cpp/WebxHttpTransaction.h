@@ -8,7 +8,7 @@ class WebxHttpTransaction;
 class WebxHttpTransactionJS;
 
 class WebxHttpTransaction : public v8h::ObjectWrap, 
-  public webx::Releasable<webx::IDatagram>, 
+  public webx::Releasable<webx::IDatagram, WebxHttpTransaction>,
   public webx::IDatagramHandler
 {
 public:
@@ -33,12 +33,13 @@ public:
     v8::Local<v8::Function> onEnd);
   ~WebxHttpTransaction();
 
+  virtual webx::IValue* getAttributs() { return &this->requestAttributs; }
   virtual bool accept(webx::IDatagramHandler *handler) override;
   virtual void discard() override;
-
-  virtual webx::IValue* getAttributs() { return &this->requestAttributs; }
-
   virtual bool send(webx::IDatagram *response) override;
+
+  void writeRequestData(webx::IData *data);
+  void endRequestData();
   virtual webx::tIOStatus getStatus() override {return this->requestStatus;}
   virtual webx::IData* pullData() override;
   virtual webx::IDatagram* pullAttachment() override { return 0; }

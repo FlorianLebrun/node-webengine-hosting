@@ -9,7 +9,7 @@ class WebxSession;
 class WebxSessionJS;
 class WebxEngine;
 
-class WebxSession : public WebxSessionObjectWrap, public webx::Releasable<webx::ISessionHost>
+class WebxSession : public WebxSessionObjectWrap, public webx::Releasable<webx::ISessionHost, WebxSession>
 {
 public:
   friend WebxSessionJS;
