@@ -1,8 +1,8 @@
 import crypto from "crypto"
 import express from "express"
 import cookieParser from "cookie-parser"
-import { fs, debug } from "../common"
-import { WebxEngine, WebxSession } from "../lib"
+import { fs, debug } from "./common"
+import { WebxEngine, WebxSession } from "./WebxEngine"
 
 
 export class WebxSessionWithTimeOut extends WebxSession {

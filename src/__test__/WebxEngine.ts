@@ -1,5 +1,5 @@
-import { debug } from "../common"
-const addon: any = require("bindings")("addon")
+import { debug } from "./common"
+import addon from ".."
 
 export class WebxSessionBase {
   name: string
