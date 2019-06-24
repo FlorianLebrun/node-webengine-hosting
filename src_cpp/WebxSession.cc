@@ -20,7 +20,7 @@ void WebxSession::completeEvents()
   Isolate *isolate = Isolate::GetCurrent();
   HandleScope scope(isolate);
 
-  if (webx::Ref<webx::IEvent> events = this->events.flush())
+  if (webx::Ref<webx::IEvent> events = webx::New(this->events.flush()))
   {
     Local<Function> onEvent = Local<Function>::New(isolate, this->onEvent);
     for (webx::IEvent *ev = events; ev; ev = ev->next)

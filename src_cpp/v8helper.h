@@ -120,9 +120,9 @@ namespace v8h
       this->lock.unlock();
       return data;
     }
-    webx::Ref<CEvent> flush() {
+    CEvent* flush() {
       this->lock.lock();
-      webx::Ref<CEvent> data = this->webx::EventQueue<CEvent>::flush();
+      CEvent* data = this->webx::EventQueue<CEvent>::flush();
       this->lock.unlock();
       return data;
     }

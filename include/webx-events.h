@@ -62,11 +62,11 @@ namespace webx
       }
       return New(data);
     }
-    Ref<CEvent> flush()
+    CEvent* flush()
     {
       CEvent* data = this->first;
       this->first = 0;
-      return New(data);
+      return data;
     }
     int count()
     {

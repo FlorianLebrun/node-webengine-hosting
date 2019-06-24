@@ -1,6 +1,6 @@
 {
   "name": "node-webengine-hosting",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "main": "dist/index.js",
   "private": true,
   "gypfile": false,
@@ -27,7 +27,7 @@
   "scripts": {
     "start": "node ./scripts/launch-monitor ./.build/__test__",
     "update": "tsc -w",
-    "build": "node-gyp rebuild && node ./scripts/build",
+    "build": "node ./scripts/build",
     "build:cpp": "node-gyp rebuild",
     "build:js": "node ./scripts/build"
   }
