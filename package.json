@@ -29,6 +29,6 @@
     "update": "tsc -w",
     "build": "node ./scripts/build",
     "build:cpp": "node-gyp rebuild",
-    "build:js": "node ./scripts/build"
+    "build:js": "tsc"
   }
 }

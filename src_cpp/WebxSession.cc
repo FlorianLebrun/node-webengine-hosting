@@ -48,9 +48,12 @@ void WebxSession::dispatchEvent(webx::IEvent *event)
 
 bool WebxSession::disconnect(webx::ISession* session)
 {
-  this->context = 0;
-  this->events.complete();
-  return true;
+  if (session == this->context) {
+    this->context = 0;
+    this->events.complete();
+    return true;
+  }
+  return false;
 }
 
 void WebxSession::free() {
