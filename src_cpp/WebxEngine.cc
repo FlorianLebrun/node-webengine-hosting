@@ -77,10 +77,6 @@ void WebxEngine::dispatchEvent(webx::IEvent *event)
   this->events.push(event);
 }
 
-void WebxEngine::free() {
-  delete this;
-}
-
 bool WebxEngine::disconnect(webx::ISession* session)
 {
   this->context = 0;

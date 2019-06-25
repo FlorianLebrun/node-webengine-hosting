@@ -10,7 +10,7 @@ namespace webx
   class IDatagram;
   class IDatagramHandler;
   class IDatagramListener;
-  
+
   struct tIOStatus {
     enum eFlags {
       DATA_END = 1,
@@ -46,7 +46,7 @@ namespace webx
     virtual IData* pullData() = 0;
     virtual IDatagram* pullAttachment() {return 0;}
   };
-  
+
   class IDatagramHandler
   {
   public:
@@ -55,14 +55,14 @@ namespace webx
     virtual void onComplete(IDatagram* from) {}
     virtual void disconnect() = 0;
   };
-  
+
   class IDatagramListener : public IReleasable
   {
   public:
     virtual IValue* getAttributs() = 0;
     virtual void onDatagram(IDatagram* datagram) = 0;
   };
-  
+
   // Interface of data event
   class IData : public IReleasable
   {
@@ -78,7 +78,7 @@ namespace webx
     static IData *New(const char* buffer, int size);
   };
 
-  
+
   class DataQueue : public EventQueue<IData> {
   public:
     tIOStatus status;
@@ -107,10 +107,6 @@ namespace webx
         buffer = this->buffer;
         size = this->size;
         return true;
-      }
-      virtual void free() override
-      {
-        ::free(this);
       }
     };
     return new (::malloc(sizeof(Data) + size)) Data(buffer, size);

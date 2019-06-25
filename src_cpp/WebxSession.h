@@ -22,7 +22,6 @@ public:
   virtual void dispatchEvent(webx::IEvent* cevent) override;
   virtual void dispatchDatagram(webx::IDatagram *datagram) override;
   virtual bool disconnect(webx::ISession* session) override;
-  virtual void free() override;
 
   virtual void completeEvents() override;
 };

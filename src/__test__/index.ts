@@ -1,9 +1,11 @@
 import crypto from "crypto"
+import process from "process"
 import express from "express"
 import cookieParser from "cookie-parser"
 import { fs, debug } from "./common"
 import { WebxEngine, WebxSession } from "./WebxEngine"
 
+process.env.NODE_ENV = "development"
 
 export class WebxSessionWithTimeOut extends WebxSession {
   sessionID: string
@@ -17,7 +19,7 @@ export class WebxSessionWithTimeOut extends WebxSession {
     this.lastActivityTime = Date.now()
     this.workings = 0
   }
-  checkValidity(time) {
+  checkTimeout(time: number) {
     const inactivityTime = time - this.lastActivityTime
     if (inactivityTime > this.engine.sessionsTimeout) {
       if (this.workings === 0) {
@@ -36,16 +38,12 @@ export class WebxSessionWithTimeOut extends WebxSession {
 }
 
 export class WebxRouter extends WebxEngine {
-  sessions: { [sessinId: string]: WebxSessionWithTimeOut }
+  sessions: { [id: string]: WebxSessionWithTimeOut } = {}
   sessionsTimeout: number
-  sessionsMax: number
-  options: any
 
   connect(options) {
-    this.sessionsTimeout = options.sessionsTimeout || 600000
-    this.sessionsMax = options.sessionsMax || 20
-    this.sessions = {}
-    this.garbageSessions()
+    this.sessionsTimeout = options.sessionsTimeout || 1000
+    this.checkSessionTimeouts()
     super.connect(options)
   }
   generateSessionID(): string {
@@ -53,12 +51,12 @@ export class WebxRouter extends WebxEngine {
     sha.update(Math.random().toString())
     return sha.digest('hex').substr(0, 8)
   };
-  garbageSessions = () => {
+  checkSessionTimeouts = () => {
     const time = Date.now()
     for (const key in this.sessions) {
-      this.sessions[key].checkValidity(time)
+      this.sessions[key].checkTimeout(time)
     }
-    setTimeout(this.garbageSessions, this.sessionsTimeout / 10)
+    setTimeout(this.checkSessionTimeouts, this.sessionsTimeout / 10)
   }
   onRuntimeTerminate(data: any) {
     process.exit(0)
@@ -67,16 +65,28 @@ export class WebxRouter extends WebxEngine {
     const { url } = req
     const sessionTypeLength = url.indexOf("/", 1)
     const sessionType = req.url.substring(1, sessionTypeLength)
+    const sessionConfig = options.configuration.sessions[sessionType]
     req.url = url.substr(sessionTypeLength)
 
     if (sessionType === "admin") {
       this.dispatch(req, res, next)
     }
-    else if (options.configuration.sessions[sessionType]) {
+    else if (!sessionConfig) {
+      next()
+    }
+    else if (sessionConfig.type === "stateless") {
+      let session = this.sessions[sessionType]
+      if (!session) {
+        session = new WebxSessionWithTimeOut(sessionType)
+        session.connect(sessionType, sessionType, this)
+        this.sessions[sessionType] = session
+      }
+      session.route(req, res, next)
+    }
+    else {
       const cookieName = "SID-" + sessionType
-      let session = null
-      let sessionID: string = req.cookies[cookieName]
-      session = sessionID && this.sessions[sessionID]
+      let sessionID = req.cookies[cookieName]
+      let session = sessionID && this.sessions[sessionID]
       if (!session) {
         sessionID = sessionType + "-" + this.generateSessionID()
         session = new WebxSessionWithTimeOut(sessionID)
@@ -85,9 +95,6 @@ export class WebxRouter extends WebxEngine {
         this.sessions[sessionID] = session
       }
       session.route(req, res, next)
-    }
-    else {
-      next()
     }
   }
 }

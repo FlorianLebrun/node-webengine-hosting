@@ -23,7 +23,6 @@ public:
   virtual void dispatchEvent(webx::IEvent* event) override;
   virtual bool disconnect(webx::ISession* session) override;
   virtual bool terminate() override;
-  virtual void free() override;
 
   virtual void completeEvents() override;
 };

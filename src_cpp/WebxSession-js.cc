@@ -17,7 +17,8 @@ void WebxSessionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
     std::string name = *Utf8Value(args[2].As<v8::String>());
 
     WebxSession *session = new WebxSession(args[3].As<v8::Function>());
-    if (session->context = engine->instance->createSession(type.c_str(), name.c_str(), session)) {
+    if (webx::ISession* context = engine->instance->createSession(type.c_str(), name.c_str(), session)) {
+      session->context.New(context);
       session->AttachObject(args.This());
       args.GetReturnValue().Set(args.This());
     }
@@ -54,6 +55,7 @@ void WebxSessionJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
   using namespace v8;
   if (WebxSession *session = WebxSession::Unwrap<WebxSession>(args.Holder())) {
     session->context->close();
+    session->context = 0;
   }
   else {
     Nan::ThrowError("Cannot close on a closed session");

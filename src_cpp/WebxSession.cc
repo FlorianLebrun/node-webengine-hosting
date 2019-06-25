@@ -55,7 +55,3 @@ bool WebxSession::disconnect(webx::ISession* session)
   }
   return false;
 }
-
-void WebxSession::free() {
-  delete this;
-}

@@ -110,24 +110,25 @@ namespace webx
     }
     virtual void release() override
     {
-#ifdef _RELEASABLE_DEBUG
       if ((--this->nref) <= 0) {
+#ifdef _RELEASABLE_DEBUG
         _report_releasable_delete(typeid(CClass));
         if (this->nref < 0) {
           printf("(!) crash risk on %s\n", typeid(CClass).name());
         }
+        this->~Releasable();
+#else
+        delete this;
+#endif
       }
+#ifdef _RELEASABLE_DEBUG
       if (_report_releasable_count(typeid(CClass)) > 10) {
         if(this->nref) printf("<release> %.X %d : %s\n", this, this->nref.load(), typeid(CClass).name());
         else printf("<delete> %.X : %s\n", this, this->nref.load(), typeid(CClass).name());
       }
-#else
-      if ((--this->nref) <= 0) {
-        this->free();
-      }
 #endif
     }
-    virtual void free() = 0;
+    virtual ~Releasable() {}
   };
 } // namespace webx
 

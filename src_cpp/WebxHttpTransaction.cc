@@ -179,9 +179,3 @@ void WebxHttpTransaction::completeEvents() {
     this->release();
   }
 }
-
-void WebxHttpTransaction::free()
-{
-  _ASSERT(!this->responseData.flush());
-  delete this; // Crash with vs2012 debugger
-}

@@ -3,18 +3,11 @@ import addon from ".."
 
 export class WebxSessionBase {
   name: string
-  readyState: boolean = false
   handle: any = null //addon.WebxSession
 
   disconnect() {
-    if (this.readyState) {
-      this.readyState = false
-      this.handle.close()
-    }
-    else throw new Error("WebxSession.disconnect invalid")
-  }
-  onStartup(data: any) {
-    debug.info(`\n[${this.name}] Session.startup`)
+    this.handle.close()
+    this.handle = null
   }
   onEvent(type: string, data: any) {
     debug.success(`\n[event] ${type}     -- on '${this.name}'`)
@@ -48,14 +41,14 @@ export class WebxSession extends WebxSessionBase {
   engine: WebxEngine
 
   connect(type: string, name: string, engine: WebxEngine) {
-    if (!this.handle && !this.readyState) {
+    if (!this.handle) {
       this.engine = engine
       this.name = name
       this.handle = new addon.WebxSession(
         engine.handle,
         type,
         name,
-        WebxSession__handleEvent.bind(this)
+        __handleEvent.bind(this)
       )
     }
     else throw new Error("WebxSession.connect invalid")
@@ -66,7 +59,7 @@ export class WebxEngine extends WebxSessionBase {
   options: any
 
   connect(options) {
-    if (!this.handle && !this.readyState) {
+    if (!this.handle) {
       this.options = options
       this.name = options.name || "admin"
 
@@ -84,7 +77,7 @@ export class WebxEngine extends WebxSessionBase {
         options.entrypoint.module,
         options.entrypoint.name,
         options.configuration ? JSON.stringify(options.configuration, null, 2) : "{}",
-        WebxEngine__handleEvent.bind(this)
+        __handleEvent.bind(this)
       )
 
       // Close engine on exit
@@ -94,37 +87,8 @@ export class WebxEngine extends WebxSessionBase {
     }
     else throw new Error("WebxEngine.connect invalid")
   }
-  onRuntimeStartup(data: any) {
-    debug.warning(`[Runtime.startup]`)
-  }
-  onRuntimeTerminate(data: any) {
-    debug.warning(`[Runtime.exit]`)
-  }
 }
 
-function WebxSession__handleEvent(type: string, data: any) {
-  switch (type) {
-    case "/runtime/session/startup":
-      this.readyState = true
-      this.name = this.handle.getName()
-      return this.onStartup(data)
-    case "/runtime/session/exit":
-      this.readyState = false
-      return this.onTerminate(data)
-    default:
-      return this.onEvent(type, data)
-  }
-}
-
-function WebxEngine__handleEvent(type: string, data: any) {
-  switch (type) {
-    case "/runtime/startup":
-      return this.onRuntimeStartup(data)
-    case "/runtime/exit":
-      this.readyState = false
-      this.handle = null
-      return this.onRuntimeTerminate(data)
-    default:
-      return WebxSession__handleEvent.call(this, type, data)
-  }
+function __handleEvent(type: string, data: any) {
+  return this.onEvent(type, data)
 }

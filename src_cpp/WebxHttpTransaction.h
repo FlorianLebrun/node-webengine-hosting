@@ -43,7 +43,6 @@ public:
   virtual webx::tIOStatus getStatus() override {return this->requestStatus;}
   virtual webx::IData* pullData() override;
   virtual webx::IDatagram* pullAttachment() override { return 0; }
-  virtual void free() override;
 
   virtual void onData(webx::IDatagram* from);
   virtual void onAttachment(webx::IDatagram* from) {}
