@@ -1,6 +1,6 @@
 {
   "name": "node-webengine-hosting",
-  "version": "0.0.10",
+  "version": "0.0.12",
   "main": "dist/index.js",
   "private": true,
   "gypfile": false,

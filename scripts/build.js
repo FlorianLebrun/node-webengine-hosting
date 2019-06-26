@@ -14,13 +14,6 @@ function copyFileSync(target, source) {
 }
 
 /*
-   Build native code
-*/
-process.env.PATH += ";" + Path.resolve("./node_modules/.bin")
-child_process.execSync("node-gyp rebuild --arch=x64 --release", { stdio: 'inherit' })
-copyFileSync("./dist/addon-win32-x64.node", "./build/Release/addon.node")
-
-/*
    Bundle dts
 */
 child_process.execSync("tsc", { stdio: 'inherit' })
@@ -31,6 +24,13 @@ const dts_result = dts.bundle({
   baseDir: "./.build",
   out: '../dist/index.d.ts'
 });
+
+/*
+   Build native code
+*/
+process.env.PATH += ";" + Path.resolve("./node_modules/.bin")
+child_process.execSync("node-gyp rebuild --arch=x64 --release", { stdio: 'inherit' })
+copyFileSync("./dist/addon-win32-x64.node", "./build/Release/addon.node")
 
 /*
    Bundle typescript
