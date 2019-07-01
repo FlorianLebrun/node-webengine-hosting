@@ -103,14 +103,15 @@ namespace v8h
     bool is_completed() {
       return this->completed;
     }
-    void push_idle(CEvent *data) {
+    void pushNew(CEvent *data) {
       this->lock.lock();
-      this->webx::EventQueue<CEvent>::push(data);
+      this->webx::EventQueue<CEvent>::pushNew(data);
       this->lock.unlock();
+      uv_async_send(&this->async);
     }
-    void push(CEvent *data) {
+    void pushRetain(CEvent *data) {
       this->lock.lock();
-      this->webx::EventQueue<CEvent>::push(data);
+      this->webx::EventQueue<CEvent>::pushRetain(data);
       this->lock.unlock();
       uv_async_send(&this->async);
     }

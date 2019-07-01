@@ -74,7 +74,7 @@ void WebxEngine::dispatchDatagram(webx::IDatagram *datagram) {
 
 void WebxEngine::dispatchEvent(webx::IEvent *event)
 {
-  this->events.push(event);
+  this->events.pushRetain(event);
 }
 
 bool WebxEngine::disconnect(webx::ISession* session)

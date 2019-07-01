@@ -94,11 +94,10 @@ void WebxHttpTransaction::discard()
 }
 
 void WebxHttpTransaction::writeRequestData(webx::IData *data) {
-  this->requestData.push(data);
+  this->requestData.pushNew(data);
   if (this->requestHandler) {
     this->requestHandler->onData(this);
   }
-  data->release();
 }
 
 void WebxHttpTransaction::endRequestData() {

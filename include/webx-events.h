@@ -42,15 +42,19 @@ namespace webx
     ~EventQueue() {
       if (this->first) this->first->release();
     }
-    void push(CEvent *data)
+    void pushNew(CEvent *data)
     {
-      data->retain();
       data->next = 0;
       if (this->first)
-        this->_->next = data;
+        this->_->next.New(data);
       else
         this->first = data;
       this->_ = data;
+    }
+    void pushRetain(CEvent *data)
+    {
+      data->retain();
+      this->pushNew(data);
     }
     Ref<CEvent> pop()
     {
