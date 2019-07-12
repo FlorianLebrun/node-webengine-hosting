@@ -17,7 +17,7 @@ public:
   WebxEngine* engine;
 
   WebxSession(v8::Local<v8::Function> onEvent);
-  ~WebxSession();
+  virtual ~WebxSession() override;
 
   virtual void dispatchEvent(webx::IEvent* cevent) override;
   virtual void dispatchDatagram(webx::IDatagram *datagram) override;

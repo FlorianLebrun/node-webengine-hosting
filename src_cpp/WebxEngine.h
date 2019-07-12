@@ -16,7 +16,7 @@ public:
   webx::Ref<webx::IEngine> instance;
 
   WebxEngine(v8::Local<v8::Function> onEvent);
-  ~WebxEngine();
+  virtual ~WebxEngine() override;
 
   void connect(const char *dllPath, const char *dllEntryPoint, const char *config);
   virtual void dispatchDatagram(webx::IDatagram *datagram) override;

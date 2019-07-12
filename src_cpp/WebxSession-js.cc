@@ -18,7 +18,7 @@ void WebxSessionJS::New(const Nan::FunctionCallbackInfo<v8::Value> &args)
 
     WebxSession *session = new WebxSession(args[3].As<v8::Function>());
     if (webx::ISession* context = engine->instance->createSession(type.c_str(), name.c_str(), session)) {
-      session->context.New(context);
+      session->context.Box(context);
       session->AttachObject(args.This());
       args.GetReturnValue().Set(args.This());
     }

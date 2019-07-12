@@ -42,11 +42,11 @@ namespace webx
     ~EventQueue() {
       if (this->first) this->first->release();
     }
-    void pushNew(CEvent *data)
+    void pushBox(CEvent *data)
     {
       data->next = 0;
       if (this->first)
-        this->_->next.New(data);
+        this->_->next.Box(data);
       else
         this->first = data;
       this->_ = data;
@@ -54,7 +54,7 @@ namespace webx
     void pushRetain(CEvent *data)
     {
       data->retain();
-      this->pushNew(data);
+      this->pushBox(data);
     }
     Ref<CEvent> pop()
     {

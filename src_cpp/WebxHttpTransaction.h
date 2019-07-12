@@ -31,7 +31,7 @@ public:
     v8::Local<v8::Function> onSend,
     v8::Local<v8::Function> onChunk,
     v8::Local<v8::Function> onEnd);
-  ~WebxHttpTransaction();
+  virtual ~WebxHttpTransaction() override;
 
   virtual webx::IValue* getAttributs() { return &this->requestAttributs; }
   virtual bool accept(webx::IDatagramHandler *handler) override;

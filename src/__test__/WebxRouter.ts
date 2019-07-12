@@ -2,7 +2,7 @@ import crypto from "crypto"
 import process from "process"
 import Path from "path"
 import { debug } from "./common"
-import addon from "node-webengine-hosting"
+import addon from ".."
 
 const LOCAL_HOST_DIRECTORY = process.cwd()
 function relocalizePath(path) {

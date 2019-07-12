@@ -26,7 +26,7 @@ struct ResponseData
     }
 
     webx::Ref<webx::IData> data;
-    data.New(response->pullData());
+    data.Box(response->pullData());
     if (data)
     {
       if (data->getData(buffer, size)) {
@@ -94,7 +94,7 @@ void WebxHttpTransaction::discard()
 }
 
 void WebxHttpTransaction::writeRequestData(webx::IData *data) {
-  this->requestData.pushNew(data);
+  this->requestData.pushRetain(data);
   if (this->requestHandler) {
     this->requestHandler->onData(this);
   }

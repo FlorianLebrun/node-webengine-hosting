@@ -108,6 +108,8 @@ namespace webx
         size = this->size;
         return true;
       }
+      virtual ~Data() override {
+      }
     };
     return new (::malloc(sizeof(Data) + size)) Data(buffer, size);
   }
