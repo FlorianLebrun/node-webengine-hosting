@@ -8,8 +8,11 @@
 #include <atomic>
 
 #ifdef _DEBUG
-#define _RELEASABLE_DEBUG(x) x
+#define _RELEASABLE_DEBUG
+#define _RELEASABLE_DEBUG_ONLY(x) x
 #define _RELEASABLE_DEBUG_LEAK_OVERFLOW 8
+#else
+#define _RELEASABLE_DEBUG_ONLY(x)
 #endif
 
 namespace webx
@@ -43,44 +46,44 @@ namespace webx
       ref._object = 0;
     }
     ~Ref() {
-      _RELEASABLE_DEBUG(this->__check__alive());
+      _RELEASABLE_DEBUG_ONLY(this->__check__alive());
       if (this->_object) this->_object->release();
     }
     void Box(CReleasable* object) {
-      _RELEASABLE_DEBUG(this->__check__alive());
+      _RELEASABLE_DEBUG_ONLY(this->__check__alive());
       this->_object = object;
     }
     CReleasable* flush() {
-      _RELEASABLE_DEBUG(this->__check__alive());
+      _RELEASABLE_DEBUG_ONLY(this->__check__alive());
       CReleasable* object = this->_object;
       this->_object = 0;
       return object;
     }
     CReleasable* operator = (CReleasable* object) {
-      _RELEASABLE_DEBUG(this->__check__alive());
+      _RELEASABLE_DEBUG_ONLY(this->__check__alive());
       if (this->_object) this->_object->release();
       if (object) object->retain();
       return this->_object = object;
     }
     CReleasable* operator -> () {
-      _RELEASABLE_DEBUG(this->__check__alive());
+      _RELEASABLE_DEBUG_ONLY(this->__check__alive());
       return this->_object;
     }
     CReleasable* operator * () {
-      _RELEASABLE_DEBUG(this->__check__alive());
+      _RELEASABLE_DEBUG_ONLY(this->__check__alive());
       return this->_object;
     }
     operator bool() {
-      _RELEASABLE_DEBUG(this->__check__alive());
+      _RELEASABLE_DEBUG_ONLY(this->__check__alive());
       return this->_object != 0;
     }
     template <class Ty>
     Ty* cast() {
-      _RELEASABLE_DEBUG(this->__check__alive());
+      _RELEASABLE_DEBUG_ONLY(this->__check__alive());
       return (Ty*)this->_object;
     }
     operator CReleasable*() {
-      _RELEASABLE_DEBUG(this->__check__alive());
+      _RELEASABLE_DEBUG_ONLY(this->__check__alive());
       return this->_object;
     }
     void __check__alive() {
