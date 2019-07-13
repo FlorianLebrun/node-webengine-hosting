@@ -44,8 +44,6 @@ function restart() {
   }
 }
 
-process.env["NODE_ENV"] = "development"
-
 start();
 nodeWatch("./.build", { recursive: true }).on('change', (change, path) => {
   restart();

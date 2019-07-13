@@ -36,6 +36,7 @@ public:
 
   static void getName(const Nan::FunctionCallbackInfo<v8::Value> &args);
   static void dispatchEvent(const Nan::FunctionCallbackInfo<v8::Value> &args);
+  static void consoleFlush(const Nan::FunctionCallbackInfo<v8::Value> &args);
   static void close(const Nan::FunctionCallbackInfo<v8::Value> &args);
 };
 

@@ -12,6 +12,7 @@ intl/messages.json
 /.vs
 /dist
 /build
+/build*
 /Dll
 /src/test
 .output

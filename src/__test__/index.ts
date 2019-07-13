@@ -1,10 +1,13 @@
 import process from "process"
+
+if(!process.env.NODE_ENV) {
+  process.env.NODE_ENV = "development"
+}
+
 import express from "express"
 import cookieParser from "cookie-parser"
 import { fs, debug } from "./common"
 import { WebxRouter } from "./WebxRouter"
-
-process.env.NODE_ENV = "development"
 
 const options = fs.readJsonSync("./webx.options.json")
 const router = new WebxRouter()

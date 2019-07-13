@@ -25,7 +25,8 @@
     "ws": "^5.1.1"
   },
   "scripts": {
-    "start": "node ./scripts/launch-monitor ./.build/__test__",
+    "start": "set \"NODE_ENV=production\" && node ./.build/__test__",
+    "debug": "node ./scripts/launch-monitor ./.build/__test__",
     "update": "tsc -w",
     "build": "node ./scripts/build",
     "build:cpp": "node-gyp rebuild",

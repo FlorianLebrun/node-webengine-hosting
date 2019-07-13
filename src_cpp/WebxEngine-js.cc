@@ -40,6 +40,13 @@ void WebxEngineJS::dispatchEvent(const Nan::FunctionCallbackInfo<v8::Value> &arg
   Nan::ThrowError("WebxEngineJS::dispatchEvent not implemented");
 }
 
+void WebxEngineJS::consoleFlush(const Nan::FunctionCallbackInfo<v8::Value> &args) {
+  if (WebxEngine *engine = WebxEngine::Unwrap<WebxEngine>(args.Holder())) {
+    if (engine->instance) engine->instance->consoleFlush();
+    fflush(stdout);
+  }
+}
+
 void WebxEngineJS::close(const Nan::FunctionCallbackInfo<v8::Value> &args)
 {
   using namespace v8;
@@ -61,6 +68,7 @@ v8::Local<v8::Function> WebxEngineJS::CreatePrototype()
   // Prototype
   Nan::SetPrototypeMethod(tpl, "getName", WebxEngineJS::getName);
   Nan::SetPrototypeMethod(tpl, "dispatchEvent", WebxEngineJS::dispatchEvent);
+  Nan::SetPrototypeMethod(tpl, "consoleFlush", WebxEngineJS::consoleFlush);
   Nan::SetPrototypeMethod(tpl, "close", WebxEngineJS::close);
 
   constructor.Reset(tpl->GetFunction());

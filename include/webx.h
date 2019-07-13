@@ -24,7 +24,6 @@ namespace webx
   public:
     virtual IValue* getAttributs() {return &IValue::Undefined;}
     virtual void dispatchDatagram(IDatagram *transaction) = 0;
-    //virtual void dispatchListener(IDatagramListener *listener) = 0;
     virtual void dispatchEvent(IEvent *event) = 0;
   };
 
@@ -58,6 +57,8 @@ namespace webx
     
     virtual ISession *createSession(const char* type, const char* name, ISessionHost *host) = 0;
     virtual void visitSessions(const std::function<void(ISession*)>& visitor) = 0;
+	
+    virtual void consoleFlush() = 0;
   };
 
   class IEngineHost : public ISessionHost
