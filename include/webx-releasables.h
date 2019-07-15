@@ -51,6 +51,7 @@ namespace webx
     }
     void Box(CReleasable* object) {
       _RELEASABLE_DEBUG_ONLY(this->__check__alive());
+      if (this->_object) this->_object->release();
       this->_object = object;
     }
     CReleasable* flush() {
@@ -114,7 +115,7 @@ namespace webx
     {
 #ifdef _RELEASABLE_DEBUG
       if (_report_releasable_new(typeid(CClass)) >= _RELEASABLE_DEBUG_LEAK_OVERFLOW) {
-        printf("(new) %.X : %s\n", this, typeid(CClass).name());
+        printf("\n(new) %.X #%d : %s\n", this, this->nref.load(), typeid(CClass).name());
       }
 #endif
     }
@@ -123,7 +124,7 @@ namespace webx
       this->nref++;
 #ifdef _RELEASABLE_DEBUG
       if (_report_releasable_count(typeid(CClass)) >= _RELEASABLE_DEBUG_LEAK_OVERFLOW) {
-        printf("(retain) %.X %d : %s\n", this, this->nref.load(), typeid(CClass).name());
+        printf("\n(retain) %.X #%d : %s\n", this, this->nref.load(), typeid(CClass).name());
       }
 #endif
     }
@@ -132,11 +133,11 @@ namespace webx
       if ((--this->nref) <= 0) {
 #ifdef _RELEASABLE_DEBUG
         if (this->nref < 0) {
-          printf("(!) over delete risk on  %.X : %s\n", this, typeid(CClass).name());
+          printf("\n(!) %.X #%d : over delete risk on %s\n", this, this->nref.load(), typeid(CClass).name());
         }
         else {
-          if (_report_releasable_delete(typeid(CClass))) {
-            printf("<delete> %.X : %s\n", this, typeid(CClass).name());
+          if (_report_releasable_delete(typeid(CClass)) >= _RELEASABLE_DEBUG_LEAK_OVERFLOW) {
+            printf("\n<delete> %.X #%d : %s\n", this, this->nref.load(), typeid(CClass).name());
           }
           this->~Releasable();
         }
@@ -146,13 +147,13 @@ namespace webx
       }
 #ifdef _RELEASABLE_DEBUG
       else if (_report_releasable_count(typeid(CClass)) >= _RELEASABLE_DEBUG_LEAK_OVERFLOW) {
-        printf("<release> %.X %d : %s\n", this, this->nref.load(), typeid(CClass).name());
+        printf("\n<release> %.X #%d : %s\n", this, this->nref.load(), typeid(CClass).name());
       }
 #endif
     }
     virtual void __check__alive() override {
       if (this->nref <= 0) {
-        printf("(!) dead reference risk on %s\n", typeid(CClass).name());
+        printf("\n(!) %.X #%d : dead reference risk on %s\n", this, this->nref.load(), typeid(CClass).name());
       }
     }
     virtual ~Releasable() { }
