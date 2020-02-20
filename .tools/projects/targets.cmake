@@ -1,0 +1,19 @@
+
+
+macro(set_project_common_output target outputDir)
+  set_target_properties(${target} PROPERTIES 
+    ARCHIVE_OUTPUT_DIRECTORY ${outputDir}
+    LIBRARY_OUTPUT_DIRECTORY ${outputDir}
+    RUNTIME_OUTPUT_DIRECTORY ${outputDir}
+    COMPILE_PDB_OUTPUT_DIRECTORY ${outputDir}
+    ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${outputDir}
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG ${outputDir}
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${outputDir}
+    COMPILE_PDB_OUTPUT_DIRECTORY_DEBUG ${outputDir}
+    ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${outputDir}
+    LIBRARY_OUTPUT_DIRECTORY_RELEASE ${outputDir}
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${outputDir}
+    COMPILE_PDB_OUTPUT_DIRECTORY_RELEASE ${outputDir}
+  )
+endmacro()
+

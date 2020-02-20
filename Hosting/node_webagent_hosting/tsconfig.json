@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "target": "es6",
+    "esModuleInterop": true,
+    "allowJs": false,
+    "inlineSourceMap": true,
+    "declaration": true,
+    "outDir": "../../.output/node-webagent-hosting",
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "node_modules/*"
+      ]
+    }
+  },
+  "files": [
+    "src/index.ts",
+    "src/__test__/index.ts"
+  ]
+}
