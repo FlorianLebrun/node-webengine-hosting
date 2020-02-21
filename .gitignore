@@ -1,21 +1,3 @@
-
-# Node.js / npm
+/.build
+/.output
 node_modules
-npm-debug.log*
-
-# tests results
-**/__tests__/_output*
-
-# react-intl messages
-intl/messages.json
-
-/.vs
-/dist
-/build
-/build*
-/Dll
-/src/test
-.output
-.build
-package-lock.json
-webx.options.json
